@@ -38,38 +38,29 @@ export default function Preview() {
   const handleDownloadPdf = async () => {
     if (!docRef.current || !data) return;
     setDownloading(true);
-
-    // Temporarily strip screen styles so html2pdf captures clean white pages
-    const wrap = docRef.current.querySelector('.doc-pages-wrap') as HTMLElement | null;
-    const shell = docRef.current.closest('.preview-shell') as HTMLElement | null;
-    const prevWrapStyle = wrap ? wrap.getAttribute('style') || '' : '';
-    const prevShellBg = shell ? shell.style.background : '';
-
-    if (wrap) {
-      wrap.style.background = '#fff';
-      wrap.style.padding = '0';
-      wrap.style.gap = '0';
-    }
-    if (shell) shell.style.background = '#fff';
-
     try {
-      const html2pdf = (await import('html2pdf.js')).default;
+      const [{ jsPDF }, { default: html2canvas }] = await Promise.all([
+        import('jspdf'),
+        import('html2canvas'),
+      ]);
+
+      const pages = docRef.current.querySelectorAll('.doc-page');
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
       const filename = `Valuation-${(data.customerName || 'document').replace(/\s+/g, '-')}.pdf`;
-      await html2pdf()
-        .set({
-          margin: 0,
-          filename,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['css', 'legacy'] },
-        })
-        .from(docRef.current)
-        .save();
+
+      for (let i = 0; i < pages.length; i++) {
+        const canvas = await html2canvas(pages[i] as HTMLElement, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false,
+        });
+        if (i > 0) pdf.addPage();
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 210, 297);
+      }
+
+      pdf.save(filename);
     } finally {
-      // Restore styles
-      if (wrap) wrap.setAttribute('style', prevWrapStyle);
-      if (shell) shell.style.background = prevShellBg;
       setDownloading(false);
     }
   };
