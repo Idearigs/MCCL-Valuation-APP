@@ -613,7 +613,7 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
   gap: 16px;
   margin-bottom: 24px;
 }
-@media (max-width: 700px) { .dash-stats { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .dash-stats { grid-template-columns: repeat(2, 1fr); } }
 
 .dash-stat-card {
   background: var(--white);
@@ -845,8 +845,8 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 }
 .dash-signout-btn:hover { color: var(--dark); }
 
-/* ── Mobile Responsive ─────────────────────────────────── */
-@media (max-width: 600px) {
+/* ── Mobile Responsive (phones only, ≤480px) ───────────── */
+@media (max-width: 480px) {
   .dash-desktop-only { display: none !important; }
   .dash-mobile-only { display: flex !important; flex-direction: column; }
 
