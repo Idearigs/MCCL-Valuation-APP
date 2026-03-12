@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ValuationData, PricingRow, defaultData } from './types';
+import { ValuationData, ValuationImage, PricingRow, defaultData } from './types';
 import { api } from './api';
 import RichEditor from './RichEditor';
 
@@ -20,7 +20,9 @@ function apiRowToData(row: any): ValuationData {
     totalRange: row.total_range || '',
     insuranceValue: row.insurance_value || '',
     numberOfItems: row.number_of_items || '1',
-    images: Array.isArray(row.images) ? row.images : [],
+    images: Array.isArray(row.images)
+      ? row.images.map((img: any) => typeof img === 'string' ? { src: img, width: 50 } : img)
+      : [],
     ownerSignature: row.owner_signature || '',
   };
 }
@@ -42,7 +44,14 @@ function dataToApiPayload(d: ValuationData) {
 }
 
 // ── Image Uploader ───────────────────────────────────────────
-function ImageUploader({ images, onChange }: { images: string[]; onChange: (imgs: string[]) => void }) {
+const SIZE_OPTIONS = [
+  { label: 'S', value: 25 },
+  { label: 'M', value: 50 },
+  { label: 'L', value: 75 },
+  { label: 'Full', value: 100 },
+];
+
+function ImageUploader({ images, onChange }: { images: ValuationImage[]; onChange: (imgs: ValuationImage[]) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
 
@@ -51,9 +60,13 @@ function ImageUploader({ images, onChange }: { images: string[]; onChange: (imgs
     Array.from(files).forEach(file => {
       if (!file.type.startsWith('image/')) return;
       const reader = new FileReader();
-      reader.onload = e => onChange([...images, e.target?.result as string]);
+      reader.onload = e => onChange([...images, { src: e.target?.result as string, width: 50 }]);
       reader.readAsDataURL(file);
     });
+  };
+
+  const setWidth = (i: number, width: number) => {
+    onChange(images.map((img, idx) => idx === i ? { ...img, width } : img));
   };
 
   return (
@@ -73,10 +86,20 @@ function ImageUploader({ images, onChange }: { images: string[]; onChange: (imgs
       </div>
       {images.length > 0 && (
         <div className="image-grid">
-          {images.map((src, i) => (
+          {images.map((img, i) => (
             <div className="image-thumb" key={i}>
-              <img src={src} alt={`Item ${i + 1}`} />
+              <img src={img.src} alt={`Item ${i + 1}`} />
               <button className="image-remove" onClick={() => onChange(images.filter((_, idx) => idx !== i))}>✕</button>
+              <div className="image-size-controls">
+                {SIZE_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    className={`image-size-btn${img.width === opt.value ? ' active' : ''}`}
+                    onClick={() => setWidth(i, opt.value)}
+                    title={`${opt.value}% width`}
+                  >{opt.label}</button>
+                ))}
+              </div>
             </div>
           ))}
         </div>

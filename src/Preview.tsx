@@ -15,7 +15,9 @@ function apiRowToData(row: any): ValuationData {
     totalRange: row.total_range || '',
     insuranceValue: row.insurance_value || '',
     numberOfItems: row.number_of_items || '1',
-    images: Array.isArray(row.images) ? row.images : [],
+    images: Array.isArray(row.images)
+      ? row.images.map((img: any) => typeof img === 'string' ? { src: img, width: 50 } : img)
+      : [],
     ownerSignature: row.owner_signature || '',
   };
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ValuationData } from './types';
+import { ValuationData, ValuationImage } from './types';
 
 // ── Helpers ────────────────────────────────────────────────
 
@@ -254,16 +254,20 @@ function Page4to7Schedule({ data }: { data: ValuationData }) {
 // ── Page 8: Picture Schedule ───────────────────────────────
 
 function Page8Pictures({ data }: { data: ValuationData }) {
+  // Support both old string[] and new ValuationImage[] formats
+  const images: ValuationImage[] = data.images.map((img: any) =>
+    typeof img === 'string' ? { src: img, width: 50 } : img
+  );
   return (
     <A4Page>
       <p className="doc-section-title">Picture Schedule</p>
-      {data.images.length === 0 ? (
+      {images.length === 0 ? (
         <p className="doc-body" style={{ color: '#aaa' }}>(No images uploaded)</p>
       ) : (
-        <div className="picture-grid">
-          {data.images.map((src, i) => (
-            <div key={i} style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-              <img src={src} alt={`Item ${i + 1}`}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4mm' }}>
+          {images.map((img, i) => (
+            <div key={i} style={{ width: `calc(${img.width}% - 4mm)`, pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+              <img src={img.src} alt={`Item ${i + 1}`}
                 style={{ width: '100%', maxHeight: '80mm', objectFit: 'contain',
                   border: '1px solid #ddd', borderRadius: 4 }} />
             </div>

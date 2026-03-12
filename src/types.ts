@@ -4,6 +4,11 @@ export interface PricingRow {
   estimatedValue: string;
 }
 
+export interface ValuationImage {
+  src: string;
+  width: number; // percentage: 25 | 33 | 50 | 75 | 100
+}
+
 export interface ValuationData {
   customerName: string;
   customerAddress: string;
@@ -13,7 +18,7 @@ export interface ValuationData {
   totalRange: string;
   insuranceValue: string;
   numberOfItems: string;
-  images: string[];
+  images: ValuationImage[];
   ownerSignature: string;
 }
 
