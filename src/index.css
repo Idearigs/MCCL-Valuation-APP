@@ -814,19 +814,40 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 @media (max-width: 600px) {
   .dash-desktop-only { display: none !important; }
   .dash-mobile-only { display: flex !important; flex-direction: column; }
+
+  /* Header */
   .dash-header { padding: 0 12px; }
-  .dash-header-inner { flex-wrap: wrap; gap: 8px; padding: 10px 0; }
+  .dash-header-inner { height: auto; flex-wrap: wrap; gap: 6px; padding: 10px 0; }
   .dash-brand-text { font-size: 14px; }
+
+  /* Stats */
   .dash-main { padding: 12px; }
-  .dash-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 0 0 12px; }
-  .dash-stat-card { padding: 12px; }
+  .dash-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+  .dash-stat-card { padding: 12px 14px; border-radius: 10px; }
   .dash-stat-value { font-size: 20px; }
-  .dash-stat-label { font-size: 11px; }
+  .dash-stat-label { font-size: 10px; margin-bottom: 4px; }
+
+  /* Table card */
   .dash-table-card { border-radius: 10px; }
   .dash-table-toolbar { flex-wrap: wrap; gap: 8px; padding: 12px; }
-  .dash-search { width: 100%; min-width: 0; }
-  .dash-date-filters { padding: 0 12px 10px; gap: 4px; }
-  .dash-date-input { width: calc(50% - 20px); font-size: 11px; }
+  .dash-search { width: 100%; min-width: 0; max-width: 100%; }
+  .dash-count { margin-left: 0; }
+
+  /* Date filters — stay on one row */
+  .dash-date-filters {
+    padding: 0 12px 12px;
+    gap: 4px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .dash-date-input { width: auto; flex: 1; min-width: 0; font-size: 11px; padding: 5px 6px; }
+  .dash-date-label { white-space: nowrap; }
+
+  /* Card actions — 2×2 grid */
+  .dash-card-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .dash-card-actions .btn { flex: unset; width: 100%; }
+
+  /* Preview toolbar */
   .preview-toolbar { flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
   .preview-toolbar .preview-title { width: 100%; order: -1; font-size: 13px; }
 }
