@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from './api';
 import { ValuationData } from './types';
@@ -25,6 +25,8 @@ export default function Preview() {
   const navigate = useNavigate();
   const [data, setData] = useState<ValuationData | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const docRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!id) { setNotFound(true); return; }
@@ -32,6 +34,28 @@ export default function Preview() {
       .then(row => setData(apiRowToData(row)))
       .catch(() => setNotFound(true));
   }, [id]);
+
+  const handleDownloadPdf = async () => {
+    if (!docRef.current || !data) return;
+    setDownloading(true);
+    try {
+      const html2pdf = (await import('html2pdf.js')).default;
+      const filename = `Valuation-${(data.customerName || 'document').replace(/\s+/g, '-')}.pdf`;
+      await html2pdf()
+        .set({
+          margin: 0,
+          filename,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, logging: false },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['css', 'legacy'] },
+        })
+        .from(docRef.current)
+        .save();
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   if (notFound) {
     return (
@@ -61,11 +85,18 @@ export default function Preview() {
         <span className="preview-title">
           {data.customerName || 'Valuation'} — {data.date ? new Date(data.date + 'T12:00:00').toLocaleDateString('en-GB') : ''}
         </span>
-        <button className="btn btn-primary" onClick={() => window.print()}>
-          🖨️ Print / Save as PDF
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-ghost" onClick={() => window.print()}>
+            🖨️ Print
+          </button>
+          <button className="btn btn-primary" onClick={handleDownloadPdf} disabled={downloading}>
+            {downloading ? 'Generating…' : '⬇ Download PDF'}
+          </button>
+        </div>
       </div>
-      <DocumentView data={data} />
+      <div ref={docRef}>
+        <DocumentView data={data} />
+      </div>
     </div>
   );
 }

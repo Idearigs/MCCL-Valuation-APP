@@ -521,6 +521,11 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 .insurer-sig-place { font-size: 10pt; font-style: italic; }
 
 /* ── Print CSS ────────────────────────────────────────────── */
+@page {
+  size: A4;
+  margin: 0; /* removes browser URL/title headers & footers */
+}
+
 @media print {
   body { background: #fff; }
 
@@ -530,9 +535,10 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 
   .doc-page {
     box-shadow: none;
-    width: 100%;
-    min-height: 0;
-    padding: 18mm 20mm 22mm;
+    width: 210mm;
+    height: 297mm;
+    padding: 0; /* header/footer images + doc-content handle their own spacing */
+    overflow: hidden;
     page-break-after: always;
     break-after: always;
   }
