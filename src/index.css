@@ -443,6 +443,10 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 .schedule-table > tfoot > tr > td { padding: 0; vertical-align: bottom; }
 .schedule-table > tbody > tr > td { padding: 0; vertical-align: top; }
 
+/* Spacers replace the letterhead images — height matches pre-printed letterhead zones */
+.schedule-lh-spacer { height: 44mm; } /* top margin: clears pre-printed header */
+.schedule-lf-spacer { height: 28mm; } /* bottom margin: clears pre-printed footer */
+
 .schedule-rule { border: none; border-top: 1px solid #bbb; margin: 8mm 0 3mm; }
 
 .schedule-html-body {

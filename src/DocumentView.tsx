@@ -166,23 +166,23 @@ function Page4to7Schedule({ data }: { data: ValuationData }) {
     <div className="schedule-page-wrap">
       <table className="schedule-table">
 
-        {/* ── Repeating header ── */}
+        {/* ── Repeating header spacer (no letterhead — printing on pre-printed paper) ── */}
         <thead>
           <tr><td style={{ padding: 0 }}>
-            <img src="/letterhead-header.png" style={{ width: '100%', display: 'block' }} />
+            <div className="schedule-lh-spacer" />
           </td></tr>
         </thead>
 
-        {/* ── Repeating footer ── */}
+        {/* ── Repeating footer spacer ── */}
         <tfoot>
           <tr><td style={{ padding: 0 }}>
-            <img src="/letterhead-footer.png" style={{ width: '100%', display: 'block' }} />
+            <div className="schedule-lf-spacer" />
           </td></tr>
         </tfoot>
 
         {/* ── All schedule content ── */}
         <tbody>
-          <tr><td style={{ padding: '6mm 20mm 8mm' }}>
+          <tr><td style={{ padding: '4mm 20mm 6mm' }}>
             <p className="doc-section-title">Schedule</p>
 
             {data.scheduleHtml ? (
