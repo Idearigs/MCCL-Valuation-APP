@@ -127,6 +127,34 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 @media (max-width: 600px) { .form-grid-2 { grid-template-columns: 1fr; } }
 
+@media (max-width: 480px) {
+  /* Form header: 2-row layout on mobile */
+  .form-header { padding: 0 14px; }
+  .form-header-inner {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 8px 0 6px;
+    gap: 4px;
+  }
+  /* Row 1: back button + title — full width */
+  .form-header-inner > div:first-child {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  /* Row 2: action buttons — full width, right-aligned */
+  .form-header-inner > div:last-child {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+  .form-brand { font-size: 13px; font-weight: 700; }
+  .form-header-inner .btn-sm { font-size: 11px; padding: 6px 10px; }
+  .form-main { padding: 16px 14px 60px; }
+}
+
 /* ── Buttons ──────────────────────────────────────────────── */
 .btn {
   padding: 10px 20px;
