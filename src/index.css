@@ -681,6 +681,8 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 }
 .dash-action-btn:hover { background: var(--surface); }
 .dash-action-btn.danger:hover { background: #FFF0EF; border-color: #FFCDD0; }
+.dash-action-btn.download { background: var(--blue); color: #fff; border-color: var(--blue); }
+.dash-action-btn.download:hover { background: #0062cc; border-color: #0062cc; }
 
 /* Empty state */
 .dash-empty {
@@ -752,21 +754,43 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
   margin-bottom: 12px;
 }
 
-/* ── Mobile Responsive ─────────────────────────────────── */
-.dash-date-filters { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
-.dash-date-input { padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--white); color: var(--dark); cursor: pointer; }
+/* ── Date Filters ──────────────────────────────────────── */
+.dash-date-filters {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 0 20px 10px;
+}
+.dash-date-input {
+  padding: 5px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  font-size: 12px;
+  background: var(--white);
+  color: var(--dark);
+  cursor: pointer;
+  width: 130px;
+}
 .dash-date-input:focus { outline: none; border-color: var(--blue); }
+.dash-date-label { font-size: 12px; color: var(--grey); font-weight: 600; }
 .dash-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-@media (max-width: 480px) {
-  .dash-header-inner { flex-wrap: wrap; gap: 8px; }
+/* ── Mobile Responsive ─────────────────────────────────── */
+@media (max-width: 600px) {
+  .dash-header { padding: 0 12px; }
+  .dash-header-inner { flex-wrap: wrap; gap: 8px; padding: 10px 0; }
   .dash-brand-text { font-size: 14px; }
-  .dash-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .dash-main { padding: 12px; }
+  .dash-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 0 0 12px; }
+  .dash-stat-card { padding: 12px; }
   .dash-stat-value { font-size: 20px; }
-  .dash-table-toolbar { flex-direction: column; gap: 8px; align-items: stretch; }
-  .dash-search { width: 100%; }
-  .dash-date-filters { flex-direction: column; gap: 6px; align-items: stretch; }
-  .dash-date-input { width: 100%; box-sizing: border-box; }
-  .dash-table { min-width: 600px; }
-  .preview-toolbar { flex-wrap: wrap; gap: 8px; }
+  .dash-stat-label { font-size: 11px; }
+  .dash-table-card { border-radius: 10px; }
+  .dash-table-toolbar { flex-wrap: wrap; gap: 8px; padding: 12px; }
+  .dash-search { width: 100%; min-width: 0; }
+  .dash-date-filters { padding: 0 12px 10px; gap: 4px; }
+  .dash-date-input { width: calc(50% - 20px); font-size: 11px; }
+  .preview-toolbar { flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
+  .preview-toolbar .preview-title { width: 100%; order: -1; font-size: 13px; }
 }
