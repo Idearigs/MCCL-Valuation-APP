@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from './api';
 import { ValuationData } from './types';
 import DocumentView from './DocumentView';
@@ -23,10 +23,12 @@ function apiRowToData(row: any): ValuationData {
 export default function Preview() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [data, setData] = useState<ValuationData | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const docRef = useRef<HTMLDivElement>(null);
+  const autoDownloadTriggered = useRef<boolean>(false);
 
   useEffect(() => {
     if (!id) { setNotFound(true); return; }
@@ -34,6 +36,13 @@ export default function Preview() {
       .then(row => setData(apiRowToData(row)))
       .catch(() => setNotFound(true));
   }, [id]);
+
+  useEffect(() => {
+    if (data && searchParams.get('download') === 'true' && !autoDownloadTriggered.current) {
+      autoDownloadTriggered.current = true;
+      handleDownloadPdf();
+    }
+  }, [data]);
 
   const handleDownloadPdf = async () => {
     if (!docRef.current || !data) return;
@@ -45,6 +54,43 @@ export default function Preview() {
       ]);
 
       const pages = docRef.current.querySelectorAll('.doc-page');
+
+      // Hide letterhead images, schedule thead/tfoot, and add padding for clean PDF
+      const lhImgs = docRef.current.querySelectorAll('.doc-lh-img');
+      const lfImgs = docRef.current.querySelectorAll('.doc-lf-img');
+      const scheduleTheads = docRef.current.querySelectorAll('.schedule-table thead');
+      const scheduleTfoots = docRef.current.querySelectorAll('.schedule-table tfoot');
+
+      const origLhDisplay: string[] = [];
+      const origLfDisplay: string[] = [];
+      const origTheadDisplay: string[] = [];
+      const origTfootDisplay: string[] = [];
+      const origPagePaddingTop: string[] = [];
+      const origPagePaddingBottom: string[] = [];
+
+      lhImgs.forEach((el, i) => {
+        origLhDisplay[i] = (el as HTMLElement).style.display;
+        (el as HTMLElement).style.display = 'none';
+      });
+      lfImgs.forEach((el, i) => {
+        origLfDisplay[i] = (el as HTMLElement).style.display;
+        (el as HTMLElement).style.display = 'none';
+      });
+      scheduleTheads.forEach((el, i) => {
+        origTheadDisplay[i] = (el as HTMLElement).style.display;
+        (el as HTMLElement).style.display = 'none';
+      });
+      scheduleTfoots.forEach((el, i) => {
+        origTfootDisplay[i] = (el as HTMLElement).style.display;
+        (el as HTMLElement).style.display = 'none';
+      });
+      pages.forEach((el, i) => {
+        origPagePaddingTop[i] = (el as HTMLElement).style.paddingTop;
+        origPagePaddingBottom[i] = (el as HTMLElement).style.paddingBottom;
+        (el as HTMLElement).style.paddingTop = '20mm';
+        (el as HTMLElement).style.paddingBottom = '20mm';
+      });
+
       const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
       const filename = `Valuation-${(data.customerName || 'document').replace(/\s+/g, '-')}.pdf`;
 
@@ -60,6 +106,16 @@ export default function Preview() {
       }
 
       pdf.save(filename);
+
+      // Restore original styles
+      lhImgs.forEach((el, i) => { (el as HTMLElement).style.display = origLhDisplay[i]; });
+      lfImgs.forEach((el, i) => { (el as HTMLElement).style.display = origLfDisplay[i]; });
+      scheduleTheads.forEach((el, i) => { (el as HTMLElement).style.display = origTheadDisplay[i]; });
+      scheduleTfoots.forEach((el, i) => { (el as HTMLElement).style.display = origTfootDisplay[i]; });
+      pages.forEach((el, i) => {
+        (el as HTMLElement).style.paddingTop = origPagePaddingTop[i];
+        (el as HTMLElement).style.paddingBottom = origPagePaddingBottom[i];
+      });
     } finally {
       setDownloading(false);
     }
