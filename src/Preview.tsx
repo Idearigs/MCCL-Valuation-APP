@@ -30,7 +30,25 @@ export default function Preview() {
   const [notFound, setNotFound] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const docRef = useRef<HTMLDivElement>(null);
+  const outerRef = useRef<HTMLDivElement>(null);
   const autoDownloadTriggered = useRef<boolean>(false);
+
+  useEffect(() => {
+    const A4_PX = 210 * (96 / 25.4);
+    const applyScale = () => {
+      if (!outerRef.current || !docRef.current) return;
+      const available = outerRef.current.offsetWidth;
+      const scale = Math.min(1, available / A4_PX);
+      docRef.current.style.transform = scale < 1 ? `scale(${scale})` : '';
+      docRef.current.style.transformOrigin = 'top left';
+      outerRef.current.style.height = scale < 1
+        ? `${docRef.current.scrollHeight * scale}px`
+        : '';
+    };
+    applyScale();
+    window.addEventListener('resize', applyScale);
+    return () => window.removeEventListener('resize', applyScale);
+  }, [data]);
 
   useEffect(() => {
     if (!id) { setNotFound(true); return; }
@@ -49,6 +67,8 @@ export default function Preview() {
   const handleDownloadPdf = async () => {
     if (!docRef.current || !data) return;
     setDownloading(true);
+    const origTransform = docRef.current.style.transform;
+    docRef.current.style.transform = '';
     try {
       const [{ jsPDF }, { default: html2canvas }] = await Promise.all([
         import('jspdf'),
@@ -119,6 +139,7 @@ export default function Preview() {
         (el as HTMLElement).style.paddingBottom = origPagePaddingBottom[i];
       });
     } finally {
+      docRef.current.style.transform = origTransform;
       setDownloading(false);
     }
   };
@@ -160,8 +181,10 @@ export default function Preview() {
           </button>
         </div>
       </div>
-      <div ref={docRef}>
-        <DocumentView data={data} />
+      <div ref={outerRef} style={{ width: '100%', overflow: 'hidden' }}>
+        <div ref={docRef}>
+          <DocumentView data={data} />
+        </div>
       </div>
     </div>
   );
