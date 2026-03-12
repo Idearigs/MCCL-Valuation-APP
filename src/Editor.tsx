@@ -1,10 +1,47 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ValuationData, PricingRow, defaultData } from './types';
-import { getRecord, saveRecord, getSignature, saveSignature, newId } from './storage';
+import { api } from './api';
 import RichEditor from './RichEditor';
 
-// ── Image Uploader ──────────────────────────────────────────
+// ── Signature localStorage helpers (UX convenience only) ────
+const SIG_KEY = 'mcculloch-valuation-sig';
+function getSignature(): string { return localStorage.getItem(SIG_KEY) ?? ''; }
+function saveSignature(sig: string): void { localStorage.setItem(SIG_KEY, sig); }
+
+// ── snake_case API row → camelCase ValuationData ─────────────
+function apiRowToData(row: any): ValuationData {
+  return {
+    customerName: row.customer_name || '',
+    customerAddress: row.customer_address || '',
+    date: row.valuation_date ? row.valuation_date.split('T')[0] : '',
+    scheduleHtml: row.schedule_html || '',
+    pricingRows: Array.isArray(row.pricing_rows) ? row.pricing_rows : [],
+    totalRange: row.total_range || '',
+    insuranceValue: row.insurance_value || '',
+    numberOfItems: row.number_of_items || '1',
+    images: Array.isArray(row.images) ? row.images : [],
+    ownerSignature: row.owner_signature || '',
+  };
+}
+
+// ── camelCase ValuationData → snake_case API payload ─────────
+function dataToApiPayload(d: ValuationData) {
+  return {
+    customer_name: d.customerName,
+    customer_address: d.customerAddress,
+    valuation_date: d.date || null,
+    schedule_html: d.scheduleHtml,
+    pricing_rows: d.pricingRows,
+    total_range: d.totalRange,
+    insurance_value: d.insuranceValue,
+    number_of_items: d.numberOfItems,
+    images: d.images,
+    owner_signature: d.ownerSignature,
+  };
+}
+
+// ── Image Uploader ───────────────────────────────────────────
 function ImageUploader({ images, onChange }: { images: string[]; onChange: (imgs: string[]) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -48,7 +85,7 @@ function ImageUploader({ images, onChange }: { images: string[]; onChange: (imgs
   );
 }
 
-// ── Signature Pad ───────────────────────────────────────────
+// ── Signature Pad ────────────────────────────────────────────
 function SignatureUploader({ value, onChange }: { value: string; onChange: (url: string) => void }) {
   const [tab, setTab] = useState<'draw' | 'upload'>('draw');
   const [drawing, setDrawing] = useState(false);
@@ -167,7 +204,7 @@ function SignatureUploader({ value, onChange }: { value: string; onChange: (url:
   );
 }
 
-// ── Pricing rows ────────────────────────────────────────────
+// ── Pricing rows ─────────────────────────────────────────────
 function PricingSection({ rows, totalRange, insuranceValue, numberOfItems, onChange }: {
   rows: PricingRow[]; totalRange: string; insuranceValue: string; numberOfItems: string;
   onChange: (p: Partial<Pick<ValuationData, 'pricingRows' | 'totalRange' | 'insuranceValue' | 'numberOfItems'>>) => void;
@@ -214,50 +251,76 @@ function PricingSection({ rows, totalRange, insuranceValue, numberOfItems, onCha
   );
 }
 
-// ── Main Editor ─────────────────────────────────────────────
+// ── Main Editor ──────────────────────────────────────────────
 export default function Editor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [recordId] = useState(id ?? newId());
-  const [data, setData] = useState<ValuationData>(() => {
-    if (id) {
-      const rec = getRecord(id);
-      if (rec) return rec.data;
-    }
-    // Load saved signature for new valuations
-    return { ...defaultData, ownerSignature: getSignature() };
-  });
+  const [apiId, setApiId] = useState<string | null>(id ?? null);
+  const [data, setData] = useState<ValuationData>({ ...defaultData, ownerSignature: getSignature() });
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState('');
+
+  // Load existing record from API
+  useEffect(() => {
+    if (!id) return;
+    api.getValuation(id)
+      .then(row => setData(apiRowToData(row)))
+      .catch(() => setLoadError('Could not load valuation'));
+  }, [id]);
 
   const update = (partial: Partial<ValuationData>) => {
     setData(d => ({ ...d, ...partial }));
     setSaved(false);
   };
 
-  const persist = (d: ValuationData) => {
-    const existing = id ? getRecord(id) : null;
-    saveRecord({
-      id: recordId,
-      customerName: d.customerName,
-      date: d.date,
-      insuranceValue: d.insuranceValue,
-      numberOfItems: d.numberOfItems,
-      status: 'draft',
-      createdAt: existing?.createdAt ?? new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      data: d,
-    });
+  const persist = async (d: ValuationData): Promise<string> => {
+    const payload = dataToApiPayload(d);
+    if (apiId) {
+      await api.updateValuation(apiId, payload);
+      return apiId;
+    } else {
+      const row = await api.createValuation(payload);
+      setApiId(row.id);
+      // Update URL without full navigation so subsequent saves use PUT
+      window.history.replaceState(null, '', `/edit/${row.id}`);
+      return row.id;
+    }
   };
 
-  const handleSave = () => {
-    persist(data);
-    setSaved(true);
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await persist(data);
+      setSaved(true);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handlePreview = () => {
-    persist(data);
-    navigate(`/preview/${recordId}`);
+  const handlePreview = async () => {
+    setSaving(true);
+    try {
+      const savedId = await persist(data);
+      navigate(`/preview/${savedId}`);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loadError) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', flexDirection: 'column', gap: 12 }}>
+        <div style={{ fontSize: 48 }}>⚠️</div>
+        <div style={{ fontSize: 18, fontWeight: 700 }}>{loadError}</div>
+        <button className="btn btn-primary" onClick={() => navigate('/')}>← Dashboard</button>
+      </div>
+    );
+  }
 
   return (
     <div className="form-shell">
@@ -272,8 +335,8 @@ export default function Editor() {
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             {saved && <span style={{ fontSize: 13, color: 'var(--success)', fontWeight: 600 }}>✓ Saved</span>}
-            <button className="btn btn-ghost btn-sm" onClick={handleSave}>Save Draft</button>
-            <button className="btn btn-primary btn-sm" onClick={handlePreview}>Preview & Print →</button>
+            <button className="btn btn-ghost btn-sm" onClick={handleSave} disabled={saving}>Save Draft</button>
+            <button className="btn btn-primary btn-sm" onClick={handlePreview} disabled={saving}>Preview & Print →</button>
           </div>
         </div>
       </header>
@@ -355,11 +418,11 @@ export default function Editor() {
         </div>
 
         <div style={{ display: 'flex', gap: 12, paddingTop: 12, justifyContent: 'center' }}>
-          <button className="btn btn-ghost" style={{ padding: '12px 32px' }} onClick={handleSave}>
+          <button className="btn btn-ghost" style={{ padding: '12px 32px' }} onClick={handleSave} disabled={saving}>
             💾 Save Draft
           </button>
           <button className="btn btn-primary" style={{ padding: '12px 32px', fontSize: 15, borderRadius: 12 }}
-            onClick={handlePreview}>
+            onClick={handlePreview} disabled={saving}>
             Generate Document →
           </button>
         </div>

@@ -1,23 +1,22 @@
-# ── Stage 1: Build ──────────────────────────────────────────
-FROM node:20-alpine AS builder
+# Stage 1: Build React frontend
+FROM node:20-alpine AS frontend-build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
 
-# ── Stage 2: Serve ──────────────────────────────────────────
-FROM nginx:alpine
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Stage 2: Production server (Express serves everything)
+FROM node:20-alpine
+WORKDIR /app
 
-# SPA fallback — all routes serve index.html
-RUN printf 'server {\n\
-  listen 80;\n\
-  root /usr/share/nginx/html;\n\
-  index index.html;\n\
-  location / {\n\
-    try_files $uri $uri/ /index.html;\n\
-  }\n\
-}\n' > /etc/nginx/conf.d/default.conf
+COPY server/package*.json ./
+RUN npm ci --omit=dev
 
-EXPOSE 80
+COPY server/ ./
+COPY --from=frontend-build /app/dist ./dist
+
+EXPOSE 5000
+ENV NODE_ENV=production
+
+CMD ["node", "index.js"]
