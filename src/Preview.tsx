@@ -38,6 +38,20 @@ export default function Preview() {
   const handleDownloadPdf = async () => {
     if (!docRef.current || !data) return;
     setDownloading(true);
+
+    // Temporarily strip screen styles so html2pdf captures clean white pages
+    const wrap = docRef.current.querySelector('.doc-pages-wrap') as HTMLElement | null;
+    const shell = docRef.current.closest('.preview-shell') as HTMLElement | null;
+    const prevWrapStyle = wrap ? wrap.getAttribute('style') || '' : '';
+    const prevShellBg = shell ? shell.style.background : '';
+
+    if (wrap) {
+      wrap.style.background = '#fff';
+      wrap.style.padding = '0';
+      wrap.style.gap = '0';
+    }
+    if (shell) shell.style.background = '#fff';
+
     try {
       const html2pdf = (await import('html2pdf.js')).default;
       const filename = `Valuation-${(data.customerName || 'document').replace(/\s+/g, '-')}.pdf`;
@@ -46,13 +60,16 @@ export default function Preview() {
           margin: 0,
           filename,
           image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, logging: false },
+          html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
           pagebreak: { mode: ['css', 'legacy'] },
         })
         .from(docRef.current)
         .save();
     } finally {
+      // Restore styles
+      if (wrap) wrap.setAttribute('style', prevWrapStyle);
+      if (shell) shell.style.background = prevShellBg;
       setDownloading(false);
     }
   };
