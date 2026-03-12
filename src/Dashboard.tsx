@@ -54,8 +54,7 @@ export default function Dashboard() {
       <header className="dash-header">
         <div className="dash-header-inner">
           <div className="dash-brand">
-            <img src="/letterhead-header.png" alt="" className="dash-brand-img" />
-            <div className="dash-brand-text">Valuation Manager</div>
+            <div className="dash-brand-text">McCulloch - Valuation Manager</div>
           </div>
           <button className="btn btn-primary" onClick={() => navigate('/new')}>
             + New Valuation
