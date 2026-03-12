@@ -859,27 +859,38 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
   .dash-brand-text { font-size: 13px; font-weight: 700; white-space: nowrap; }
   .dash-header-inner .btn { font-size: 12px; padding: 6px 11px; border-radius: 8px; }
 
-  /* Stats — compact 2×2 */
+  /* Stats — single horizontal strip, no individual cards */
   .dash-main { padding: 12px; }
   .dash-stats {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    display: flex;
+    grid-template-columns: unset;
+    gap: 0;
     margin-bottom: 12px;
+    background: var(--white);
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.08);
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   }
   .dash-stat-card {
-    padding: 10px 12px;
-    border-radius: 10px;
-    border-top: 2px solid var(--blue);
+    flex: 1;
+    padding: 10px 0;
+    border-radius: 0;
+    border-top: none;
+    border-right: 1px solid rgba(0,0,0,0.08);
+    box-shadow: none;
+    text-align: center;
   }
-  .dash-stat-value { font-size: 18px; font-weight: 800; }
-  .dash-stat-label { font-size: 9.5px; letter-spacing: 0.3px; margin-bottom: 3px; }
+  .dash-stat-card:last-child { border-right: none; }
+  .dash-stat-value { font-size: 16px; font-weight: 800; line-height: 1.1; }
+  .dash-stat-label { font-size: 9px; letter-spacing: 0.2px; margin-bottom: 3px; }
 
   /* Content card */
   .dash-table-card { border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
 
-  /* Toolbar */
+  /* Toolbar — compact search */
   .dash-table-toolbar {
-    padding: 10px 12px;
+    padding: 9px 12px;
     border-bottom: 1px solid rgba(0,0,0,0.06);
     gap: 8px;
     flex-wrap: wrap;
@@ -888,14 +899,15 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
     width: 100%;
     min-width: 0;
     max-width: 100%;
-    font-size: 13px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid rgba(0,0,0,0.12);
+    font-size: 12px;
+    padding: 7px 10px;
+    border-radius: 7px;
+    border: 1px solid rgba(0,0,0,0.1);
+    height: 32px;
   }
   .dash-count {
     margin-left: auto;
-    font-size: 12px;
+    font-size: 11px;
   }
 
   /* Date filters — very compact inline */
