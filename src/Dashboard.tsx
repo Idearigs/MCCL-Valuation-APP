@@ -8,6 +8,32 @@ function formatDate(iso: string) {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+const IcEdit = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </svg>
+);
+const IcEye = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>
+);
+const IcDownload = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+    <polyline points="7 10 12 15 17 10"/>
+    <line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+);
+const IcTrash = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6"/>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+  </svg>
+);
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [records, setRecords] = useState<any[]>([]);
@@ -66,11 +92,11 @@ export default function Dashboard() {
       <header className="dash-header">
         <div className="dash-header-inner">
           <div className="dash-brand">
-            <div className="dash-brand-text">McCulloch - Valuation Manager</div>
+            <div className="dash-brand-text">MCCL · Valuation</div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn-primary" onClick={() => navigate('/new')}>+ New Valuation</button>
-            <button className="btn btn-ghost" onClick={handleLogout}>Sign out</button>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <button className="btn btn-primary btn-sm dash-nav-btn" onClick={() => navigate('/new')}>+ New</button>
+            <button className="dash-signout-btn" onClick={handleLogout}>Sign out</button>
           </div>
         </div>
       </header>
@@ -173,8 +199,7 @@ export default function Dashboard() {
                         <div className="dash-card-left">
                           <div className="dash-card-name">{r.customer_name || '—'}</div>
                           <div className="dash-card-sub">
-                            {formatDate(r.valuation_date)}
-                            {r.number_of_items ? ` · ${r.number_of_items} items` : ''}
+                            {[formatDate(r.valuation_date), r.number_of_items ? `${r.number_of_items} items` : null].filter(Boolean).join(' · ')}
                           </div>
                         </div>
                         <div className="dash-card-right">
@@ -184,10 +209,10 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="dash-card-actions">
-                      <button className="dash-act-btn" onClick={() => navigate(`/edit/${r.id}`)}>Edit</button>
-                      <button className="dash-act-btn" onClick={() => navigate(`/preview/${r.id}`)}>Preview</button>
-                      <button className="dash-act-btn primary" onClick={() => navigate(`/preview/${r.id}?download=true`)}>PDF</button>
-                      <button className="dash-act-btn danger" onClick={() => setDeleteConfirm(r.id)}>Delete</button>
+                      <button className="dash-ic-btn" onClick={() => navigate(`/edit/${r.id}`)} title="Edit"><IcEdit /></button>
+                      <button className="dash-ic-btn" onClick={() => navigate(`/preview/${r.id}`)} title="Preview"><IcEye /></button>
+                      <button className="dash-ic-btn accent" onClick={() => navigate(`/preview/${r.id}?download=true`)} title="Download PDF"><IcDownload /></button>
+                      <button className="dash-ic-btn danger" onClick={() => setDeleteConfirm(r.id)} title="Delete"><IcTrash /></button>
                     </div>
                   </div>
                 ))}
