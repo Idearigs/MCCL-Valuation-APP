@@ -46,10 +46,20 @@ export default function Preview() {
         : '';
     };
     const resetForPrint = () => {
-      if (docRef.current) docRef.current.style.transform = '';
+      if (docRef.current) {
+        docRef.current.style.transform = '';
+        docRef.current.querySelectorAll<HTMLElement>('.doc-lh-img, .doc-lf-img')
+          .forEach(el => { el.style.display = 'none'; });
+      }
       if (outerRef.current) { outerRef.current.style.height = ''; outerRef.current.style.overflow = ''; }
     };
-    const restoreAfterPrint = () => applyScale();
+    const restoreAfterPrint = () => {
+      if (docRef.current) {
+        docRef.current.querySelectorAll<HTMLElement>('.doc-lh-img, .doc-lf-img')
+          .forEach(el => { el.style.display = ''; });
+      }
+      applyScale();
+    };
     applyScale();
     window.addEventListener('resize', applyScale);
     window.addEventListener('beforeprint', resetForPrint);
