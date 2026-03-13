@@ -606,6 +606,8 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
     padding: 65mm 0 20mm !important;
     overflow: hidden;
   }
+  /* Never let a doc-page be split mid-print-page */
+  .doc-page { break-inside: avoid; page-break-inside: avoid; }
   .doc-page:not(:last-child) { page-break-after: always; break-after: always; }
 
   /* Schedule table: repeat header & footer on every page */
@@ -614,8 +616,12 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
   .schedule-table tfoot { display: table-footer-group; }
   .schedule-table tbody { display: table-row-group; }
 
-  /* Schedule page itself has no doc-page class, no page-break from container */
-  .schedule-page-wrap { break-before: page; page-break-before: always; }
+  /* Schedule page: start on new page, AND force new page after it ends
+     so Picture Schedule always starts at the top of a fresh page */
+  .schedule-page-wrap {
+    break-before: page; page-break-before: always;
+    break-after: page;  page-break-after: always;
+  }
 
   img { max-width: 100%; }
   a { text-decoration: none; }
