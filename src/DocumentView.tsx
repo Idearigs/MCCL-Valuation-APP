@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ValuationData, ValuationImage } from './types';
 
 // ── Helpers ────────────────────────────────────────────────
@@ -155,11 +155,25 @@ function Page3Contents() {
 // Screen: A4Page wrapper (proper letterhead, page appearance).
 // Print:  thead/tfoot table trick so Chrome repeats letterhead on every page.
 
+// How many mm of content fits per screen A4 page:
+// 297mm total − ~65mm letterhead − ~35mm footer − 6mm top pad − 8mm bottom pad = 183mm
+const SCHEDULE_PAGE_CONTENT_MM = 183;
+
 function Page4to7Schedule({ data }: { data: ValuationData }) {
   const year = data.date
     ? new Date(data.date + 'T12:00:00').getFullYear()
     : new Date().getFullYear();
   const hasPricing = data.pricingRows.some(r => r.component || r.estimatedValue);
+
+  const [numPages, setNumPages] = useState(1);
+  const contentMeasureRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!contentMeasureRef.current) return;
+    const pagePx = SCHEDULE_PAGE_CONTENT_MM * (96 / 25.4);
+    const totalPx = contentMeasureRef.current.scrollHeight;
+    setNumPages(Math.max(1, Math.ceil(totalPx / pagePx)));
+  }, [data.scheduleHtml, data.pricingRows, data.totalRange, data.insuranceValue]);
 
   const scheduleBody = (
     <>
@@ -229,9 +243,28 @@ function Page4to7Schedule({ data }: { data: ValuationData }) {
 
   return (
     <>
-      {/* ── Screen only: A4Page gives proper letterhead + page appearance ── */}
+      {/* ── Screen only: multiple A4 pages, each showing a slice of content ── */}
       <div className="schedule-screen-only">
-        <A4Page>{scheduleBody}</A4Page>
+        {/* Hidden measurement div — same content width as doc-content (170mm) */}
+        <div style={{ position: 'fixed', top: 0, left: '-9999px', width: '170mm', visibility: 'hidden', pointerEvents: 'none' }}>
+          <div ref={contentMeasureRef} style={{ fontFamily: "'Playfair Display','Times New Roman',Georgia,serif" }}>
+            {scheduleBody}
+          </div>
+        </div>
+        {/* One A4Page per measured page */}
+        {Array.from({ length: numPages }, (_, i) => (
+          <A4Page key={i}>
+            <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+              <div style={{
+                position: 'absolute',
+                top: `${-i * SCHEDULE_PAGE_CONTENT_MM}mm`,
+                left: 0, right: 0,
+              }}>
+                {scheduleBody}
+              </div>
+            </div>
+          </A4Page>
+        ))}
       </div>
 
       {/* ── Print only: table trick repeats letterhead on every physical page ── */}
