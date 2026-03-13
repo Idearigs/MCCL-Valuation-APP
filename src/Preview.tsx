@@ -87,43 +87,6 @@ export default function Preview() {
       ]);
 
       const pages = docRef.current.querySelectorAll('.doc-page');
-
-      // Hide letterhead images, schedule thead/tfoot, and add padding for clean PDF
-      const lhImgs = docRef.current.querySelectorAll('.doc-lh-img');
-      const lfImgs = docRef.current.querySelectorAll('.doc-lf-img');
-      const scheduleTheads = docRef.current.querySelectorAll('.schedule-table thead');
-      const scheduleTfoots = docRef.current.querySelectorAll('.schedule-table tfoot');
-
-      const origLhDisplay: string[] = [];
-      const origLfDisplay: string[] = [];
-      const origTheadDisplay: string[] = [];
-      const origTfootDisplay: string[] = [];
-      const origPagePaddingTop: string[] = [];
-      const origPagePaddingBottom: string[] = [];
-
-      lhImgs.forEach((el, i) => {
-        origLhDisplay[i] = (el as HTMLElement).style.display;
-        (el as HTMLElement).style.display = 'none';
-      });
-      lfImgs.forEach((el, i) => {
-        origLfDisplay[i] = (el as HTMLElement).style.display;
-        (el as HTMLElement).style.display = 'none';
-      });
-      scheduleTheads.forEach((el, i) => {
-        origTheadDisplay[i] = (el as HTMLElement).style.display;
-        (el as HTMLElement).style.display = 'none';
-      });
-      scheduleTfoots.forEach((el, i) => {
-        origTfootDisplay[i] = (el as HTMLElement).style.display;
-        (el as HTMLElement).style.display = 'none';
-      });
-      pages.forEach((el, i) => {
-        origPagePaddingTop[i] = (el as HTMLElement).style.paddingTop;
-        origPagePaddingBottom[i] = (el as HTMLElement).style.paddingBottom;
-        (el as HTMLElement).style.paddingTop = '20mm';
-        (el as HTMLElement).style.paddingBottom = '20mm';
-      });
-
       const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
       const filename = `Valuation-${(data.customerName || 'document').replace(/\s+/g, '-')}.pdf`;
 
@@ -139,16 +102,6 @@ export default function Preview() {
       }
 
       pdf.save(filename);
-
-      // Restore original styles
-      lhImgs.forEach((el, i) => { (el as HTMLElement).style.display = origLhDisplay[i]; });
-      lfImgs.forEach((el, i) => { (el as HTMLElement).style.display = origLfDisplay[i]; });
-      scheduleTheads.forEach((el, i) => { (el as HTMLElement).style.display = origTheadDisplay[i]; });
-      scheduleTfoots.forEach((el, i) => { (el as HTMLElement).style.display = origTfootDisplay[i]; });
-      pages.forEach((el, i) => {
-        (el as HTMLElement).style.paddingTop = origPagePaddingTop[i];
-        (el as HTMLElement).style.paddingBottom = origPagePaddingBottom[i];
-      });
     } finally {
       docRef.current.style.transform = origTransform;
       setDownloading(false);
