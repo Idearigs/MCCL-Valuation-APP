@@ -45,9 +45,20 @@ export default function Preview() {
         ? `${docRef.current.scrollHeight * scale}px`
         : '';
     };
+    const resetForPrint = () => {
+      if (docRef.current) docRef.current.style.transform = '';
+      if (outerRef.current) { outerRef.current.style.height = ''; outerRef.current.style.overflow = ''; }
+    };
+    const restoreAfterPrint = () => applyScale();
     applyScale();
     window.addEventListener('resize', applyScale);
-    return () => window.removeEventListener('resize', applyScale);
+    window.addEventListener('beforeprint', resetForPrint);
+    window.addEventListener('afterprint', restoreAfterPrint);
+    return () => {
+      window.removeEventListener('resize', applyScale);
+      window.removeEventListener('beforeprint', resetForPrint);
+      window.removeEventListener('afterprint', restoreAfterPrint);
+    };
   }, [data]);
 
   useEffect(() => {

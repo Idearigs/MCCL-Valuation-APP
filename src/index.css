@@ -586,13 +586,6 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
     width: 210mm !important;
   }
 
-  /* Remove JS-set height/overflow from scale wrappers */
-  .preview-shell > div[style] {
-    height: auto !important;
-    overflow: visible !important;
-    transform: none !important;
-  }
-
   .no-print, .preview-toolbar { display: none !important; }
 
   /* Hide letterhead — printing on pre-printed paper */
