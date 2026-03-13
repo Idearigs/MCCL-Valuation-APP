@@ -571,7 +571,27 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 }
 
 @media print {
-  body { background: #fff; }
+  /* Force body to A4 width so Chrome doesn't scale down viewport */
+  html, body {
+    width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .preview-shell {
+    background: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 210mm !important;
+  }
+
+  /* Remove JS-set height/overflow from scale wrappers */
+  .preview-shell > div[style] {
+    height: auto !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
 
   .no-print, .preview-toolbar { display: none !important; }
 
