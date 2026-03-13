@@ -330,31 +330,45 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
   font-family: 'Playfair Display', 'Times New Roman', Georgia, serif;
 }
 
-/* Real letterhead image strips */
+/* Real letterhead image strips — heights match print padding exactly so preview = print */
 .doc-lh-img {
   width: 100%;
+  height: 65mm;
+  object-fit: contain;
+  object-position: center;
   display: block;
   flex-shrink: 0;
 }
 .doc-lf-img {
   width: 100%;
+  height: 35mm;
+  object-fit: contain;
+  object-position: center;
   display: block;
   flex-shrink: 0;
   margin-top: auto;
 }
 
-/* Fallback plain header/footer if images missing */
+/* Fallback plain header/footer if images missing — same heights as images */
 .doc-lh-fallback {
-  text-align: center;
-  padding: 12mm 20mm 6mm;
+  height: 65mm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   border-bottom: 1px solid #ccc;
+  flex-shrink: 0;
 }
 .doc-lf-fallback {
-  padding: 6mm 20mm 8mm;
+  height: 35mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-top: 1px solid #ccc;
   font-size: 8pt;
   color: #777;
   margin-top: auto;
+  flex-shrink: 0;
 }
 .doc-company-name {
   font-family: 'Playfair Display', serif;
@@ -461,7 +475,15 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 .contents-dots { flex: 1; border-bottom: 1.5px dotted #777; margin: 0 8px; }
 .contents-page { font-style: italic; }
 
-/* Schedule section ── uses table trick for print */
+/* Schedule section ── dual render (screen = A4Page, print = table trick) */
+
+/* Screen: show A4Page version, hide table version */
+.schedule-screen-only { display: block; }
+.schedule-print-only  { display: none; }
+
+/* Screen: schedule page can be taller than 297mm if content is long */
+.schedule-screen-only .doc-page { min-height: 297mm; height: auto; }
+
 .schedule-table {
   width: 100%;
   border-collapse: collapse;
@@ -471,11 +493,9 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 .schedule-table > tfoot > tr > td { padding: 0; vertical-align: bottom; }
 .schedule-table > tbody > tr > td { padding: 0; vertical-align: top; }
 
-/* Schedule letterhead: image on screen, spacer on print */
-.schedule-lh-img,
-.schedule-lf-img { width: 100%; display: block; } /* screen: show image */
+/* Spacers no longer used — letterhead images handle spacing */
 .schedule-lh-spacer,
-.schedule-lf-spacer { display: none; }            /* screen: hide spacer */
+.schedule-lf-spacer { display: none; }
 
 .schedule-rule { border: none; border-top: 1px solid #bbb; margin: 8mm 0 3mm; }
 
@@ -590,8 +610,9 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 
   .no-print, .preview-toolbar { display: none !important; }
 
-  /* Hide letterhead — printing on pre-printed paper */
-  .doc-lh-img, .doc-lf-img { display: none !important; }
+  /* Hide letterhead — content only prints, letterhead comes from pre-printed paper */
+  .doc-lh-img, .doc-lf-img,
+  .doc-lh-fallback, .doc-lf-fallback { display: none !important; }
 
   .doc-pages-wrap { padding: 0; gap: 0; background: none; }
 
@@ -599,17 +620,17 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
     box-shadow: none;
     width: 210mm;
     height: 297mm;
-    /*
-     * Top: 65mm + 6mm doc-content = 71mm total (clears full pre-printed letterhead)
-     * Bottom: 20mm + 8mm doc-content = 28mm total (clears pre-printed footer)
-     * Left/Right: 0 — doc-content provides 20mm side margins
-     */
-    padding: 65mm 0 20mm !important;
+    /* Match the exact space the letterhead images occupy on screen */
+    padding: 65mm 0 35mm !important;
     overflow: hidden;
   }
   /* Never let a doc-page be split mid-print-page */
   .doc-page { break-inside: avoid; page-break-inside: avoid; }
   .doc-page:not(:last-child) { page-break-after: always; break-after: always; }
+
+  /* Print: hide screen version, show table version */
+  .schedule-screen-only { display: none !important; }
+  .schedule-print-only  { display: block !important; }
 
   /* Schedule table: repeat header & footer on every page */
   .schedule-table { width: 100%; }
@@ -617,10 +638,9 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
   .schedule-table tfoot { display: table-footer-group; }
   .schedule-table tbody { display: table-row-group; }
 
-  /* Print: hide letterhead images, show spacers instead */
-  /* Top: 67mm spacer + 4mm tbody padding = 71mm total */
-  .schedule-lh-spacer { display: block !important; height: 67mm; }
-  .schedule-lf-spacer { display: block !important; height: 28mm; }
+  /* Schedule spacers match the 65mm/35mm padding used on regular pages */
+  .schedule-lh-spacer { display: block !important; height: 65mm; }
+  .schedule-lf-spacer { display: block !important; height: 35mm; }
 
   /* Schedule page: start on new page, AND force new page after it ends
      so Picture Schedule always starts at the top of a fresh page */

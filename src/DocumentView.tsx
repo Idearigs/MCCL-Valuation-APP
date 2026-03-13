@@ -151,10 +151,9 @@ function Page3Contents() {
   );
 }
 
-// ── Pages 4–7: Schedule — thead/tfoot table trick ──────────
-// The <thead> and <tfoot> contain the real letterhead images.
-// When this section spans multiple printed pages, Chrome automatically
-// repeats both on every physical page.
+// ── Pages 4–7: Schedule — dual render ──────────────────────
+// Screen: A4Page wrapper (proper letterhead, page appearance).
+// Print:  thead/tfoot table trick so Chrome repeats letterhead on every page.
 
 function Page4to7Schedule({ data }: { data: ValuationData }) {
   const year = data.date
@@ -162,93 +161,102 @@ function Page4to7Schedule({ data }: { data: ValuationData }) {
     : new Date().getFullYear();
   const hasPricing = data.pricingRows.some(r => r.component || r.estimatedValue);
 
-  return (
-    <div className="schedule-page-wrap">
-      <table className="schedule-table">
+  const scheduleBody = (
+    <>
+      <p className="doc-section-title">Schedule</p>
 
-        {/* Screen: show letterhead image. Print: hide image, show spacer */}
-        <thead>
-          <tr><td style={{ padding: 0 }}>
-            <img src="/letterhead-header.png" className="doc-lh-img schedule-lh-img" alt="" />
-            <div className="schedule-lh-spacer" />
-          </td></tr>
-        </thead>
+      {data.scheduleHtml ? (
+        <div className="schedule-html-body"
+          dangerouslySetInnerHTML={{ __html: data.scheduleHtml }} />
+      ) : (
+        <p className="schedule-html-body" style={{ color: '#aaa' }}>
+          (No schedule content entered)
+        </p>
+      )}
 
-        <tfoot>
-          <tr><td style={{ padding: 0 }}>
-            <img src="/letterhead-footer.png" className="doc-lf-img schedule-lf-img" alt="" />
-            <div className="schedule-lf-spacer" />
-          </td></tr>
-        </tfoot>
+      {hasPricing && (
+        <div className="pricing-section">
+          <hr className="schedule-rule" />
+          <p className="pricing-header">
+            Replacement Cost (UK Retail Market {year})
+          </p>
+          <div className="pricing-row-doc">
+            <span style={{ textDecoration: 'underline', fontWeight: 700, fontStyle: 'italic' }}>
+              Component
+            </span>
+          </div>
+          <div className="pricing-row-doc" style={{ marginTop: '-2mm' }}>
+            <span style={{ textDecoration: 'underline', fontWeight: 700, fontStyle: 'italic' }}>
+              Estimated Value
+            </span>
+          </div>
 
-        {/* ── All schedule content ── */}
-        <tbody>
-          <tr><td style={{ padding: '4mm 20mm 6mm' }}>
-            <p className="doc-section-title">Schedule</p>
-
-            {data.scheduleHtml ? (
-              <div className="schedule-html-body"
-                dangerouslySetInnerHTML={{ __html: data.scheduleHtml }} />
-            ) : (
-              <p className="schedule-html-body" style={{ color: '#aaa' }}>
-                (No schedule content entered)
-              </p>
-            )}
-
-            {hasPricing && (
-              <div className="pricing-section">
-                <hr className="schedule-rule" />
-                <p className="pricing-header">
-                  Replacement Cost (UK Retail Market {year})
-                </p>
-                <div className="pricing-row-doc">
-                  <span style={{ textDecoration: 'underline', fontWeight: 700, fontStyle: 'italic' }}>
-                    Component
-                  </span>
-                </div>
-                <div className="pricing-row-doc" style={{ marginTop: '-2mm' }}>
-                  <span style={{ textDecoration: 'underline', fontWeight: 700, fontStyle: 'italic' }}>
-                    Estimated Value
-                  </span>
-                </div>
-
-                {data.pricingRows.filter(r => r.component).map(row => (
-                  <div key={row.id}>
-                    <div className="pricing-row-doc" style={{ marginTop: '4mm' }}>
-                      <span style={{ fontWeight: 700, fontStyle: 'italic', textDecoration: 'underline' }}>
-                        {row.component}
-                      </span>
-                    </div>
-                    {row.estimatedValue && (
-                      <div className="pricing-row-doc" style={{ marginTop: '-1mm' }}>
-                        <span style={{ fontStyle: 'italic' }}>{row.estimatedValue}</span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-                {data.totalRange && (
-                  <div style={{ marginTop: '6mm' }}>
-                    <p className="pricing-total-label">Total realistic replacement value</p>
-                    <p className="pricing-total-value">{data.totalRange}</p>
-                  </div>
-                )}
-                {data.insuranceValue && (
-                  <>
-                    <p className="pricing-insurance-label">Recommended Insurance Value:</p>
-                    <p className="pricing-insurance-value">{data.insuranceValue}</p>
-                    <p className="pricing-footnote">
-                      (Industry standard is to round up slightly to reflect fluctuating diamond
-                      costs, bespoke labour, and jewellery inflation.)
-                    </p>
-                  </>
-                )}
+          {data.pricingRows.filter(r => r.component).map(row => (
+            <div key={row.id}>
+              <div className="pricing-row-doc" style={{ marginTop: '4mm' }}>
+                <span style={{ fontWeight: 700, fontStyle: 'italic', textDecoration: 'underline' }}>
+                  {row.component}
+                </span>
               </div>
-            )}
-          </td></tr>
-        </tbody>
-      </table>
-    </div>
+              {row.estimatedValue && (
+                <div className="pricing-row-doc" style={{ marginTop: '-1mm' }}>
+                  <span style={{ fontStyle: 'italic' }}>{row.estimatedValue}</span>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {data.totalRange && (
+            <div style={{ marginTop: '6mm' }}>
+              <p className="pricing-total-label">Total realistic replacement value</p>
+              <p className="pricing-total-value">{data.totalRange}</p>
+            </div>
+          )}
+          {data.insuranceValue && (
+            <>
+              <p className="pricing-insurance-label">Recommended Insurance Value:</p>
+              <p className="pricing-insurance-value">{data.insuranceValue}</p>
+              <p className="pricing-footnote">
+                (Industry standard is to round up slightly to reflect fluctuating diamond
+                costs, bespoke labour, and jewellery inflation.)
+              </p>
+            </>
+          )}
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    <>
+      {/* ── Screen only: A4Page gives proper letterhead + page appearance ── */}
+      <div className="schedule-screen-only">
+        <A4Page>{scheduleBody}</A4Page>
+      </div>
+
+      {/* ── Print only: table trick repeats letterhead on every physical page ── */}
+      <div className="schedule-print-only">
+        <div className="schedule-page-wrap">
+          <table className="schedule-table">
+            <thead>
+              <tr><td style={{ padding: 0 }}>
+                <div className="schedule-lh-spacer" />
+              </td></tr>
+            </thead>
+            <tfoot>
+              <tr><td style={{ padding: 0 }}>
+                <div className="schedule-lf-spacer" />
+              </td></tr>
+            </tfoot>
+            <tbody>
+              <tr><td style={{ padding: '4mm 20mm 6mm' }}>
+                {scheduleBody}
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
   );
 }
 

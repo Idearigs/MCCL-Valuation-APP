@@ -48,14 +48,14 @@ export default function Preview() {
     const resetForPrint = () => {
       if (docRef.current) {
         docRef.current.style.transform = '';
-        docRef.current.querySelectorAll<HTMLElement>('.doc-lh-img, .doc-lf-img')
+        docRef.current.querySelectorAll<HTMLElement>('.doc-lh-img, .doc-lf-img, .doc-lh-fallback, .doc-lf-fallback')
           .forEach(el => { el.style.display = 'none'; });
       }
       if (outerRef.current) { outerRef.current.style.height = ''; outerRef.current.style.overflow = ''; }
     };
     const restoreAfterPrint = () => {
       if (docRef.current) {
-        docRef.current.querySelectorAll<HTMLElement>('.doc-lh-img, .doc-lf-img')
+        docRef.current.querySelectorAll<HTMLElement>('.doc-lh-img, .doc-lf-img, .doc-lh-fallback, .doc-lf-fallback')
           .forEach(el => { el.style.display = ''; });
       }
       applyScale();
