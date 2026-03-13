@@ -322,28 +322,23 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 .doc-page {
   background: #fff;
   width: 210mm;
-  min-height: 297mm;
+  height: 297mm;
   padding: 0;
   box-shadow: 0 4px 24px rgba(0,0,0,0.15);
   display: flex;
   flex-direction: column;
   font-family: 'Playfair Display', 'Times New Roman', Georgia, serif;
+  overflow: hidden;
 }
 
-/* Real letterhead image strips — heights match print padding exactly so preview = print */
+/* Real letterhead image strips */
 .doc-lh-img {
   width: 100%;
-  height: 65mm;
-  object-fit: contain;
-  object-position: center;
   display: block;
   flex-shrink: 0;
 }
 .doc-lf-img {
   width: 100%;
-  height: 35mm;
-  object-fit: contain;
-  object-position: center;
   display: block;
   flex-shrink: 0;
   margin-top: auto;
@@ -388,6 +383,8 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 .doc-content {
   flex: 1;
   padding: 6mm 20mm 8mm;
+  display: flex;
+  flex-direction: column;
 }
 
 .doc-section-title {
@@ -481,8 +478,8 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 .schedule-screen-only { display: block; }
 .schedule-print-only  { display: none; }
 
-/* Screen: schedule page can be taller than 297mm if content is long */
-.schedule-screen-only .doc-page { min-height: 297mm; height: auto; }
+/* Schedule screen page: auto height since content can exceed one A4 page */
+.schedule-screen-only .doc-page { height: auto; min-height: 297mm; overflow: visible; }
 
 .schedule-table {
   width: 100%;
