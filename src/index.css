@@ -471,10 +471,11 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 .schedule-table > tfoot > tr > td { padding: 0; vertical-align: bottom; }
 .schedule-table > tbody > tr > td { padding: 0; vertical-align: top; }
 
-/* Spacers replace the letterhead images — height matches pre-printed letterhead zones */
-/* Top: 67mm spacer + 4mm tbody padding = 71mm total (matches doc-page 65mm + doc-content 6mm) */
-.schedule-lh-spacer { height: 67mm; } /* top margin: clears full pre-printed header */
-.schedule-lf-spacer { height: 28mm; } /* bottom margin: clears pre-printed footer */
+/* Schedule letterhead: image on screen, spacer on print */
+.schedule-lh-img,
+.schedule-lf-img { width: 100%; display: block; } /* screen: show image */
+.schedule-lh-spacer,
+.schedule-lf-spacer { display: none; }            /* screen: hide spacer */
 
 .schedule-rule { border: none; border-top: 1px solid #bbb; margin: 8mm 0 3mm; }
 
@@ -615,6 +616,11 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
   .schedule-table thead { display: table-header-group; }
   .schedule-table tfoot { display: table-footer-group; }
   .schedule-table tbody { display: table-row-group; }
+
+  /* Print: hide letterhead images, show spacers instead */
+  /* Top: 67mm spacer + 4mm tbody padding = 71mm total */
+  .schedule-lh-spacer { display: block !important; height: 67mm; }
+  .schedule-lf-spacer { display: block !important; height: 28mm; }
 
   /* Schedule page: start on new page, AND force new page after it ends
      so Picture Schedule always starts at the top of a fresh page */
