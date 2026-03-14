@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, setToken } from './api';
 
-const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@mcculloch.com';
+const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'has@mccullochjewellers.co.uk';
 const PIN_LENGTH = 4;
 
 export default function Login() {
