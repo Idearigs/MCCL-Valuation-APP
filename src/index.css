@@ -1095,3 +1095,76 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
   .preview-toolbar { flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
   .preview-toolbar .preview-title { width: 100%; order: -1; font-size: 13px; }
 }
+
+/* ── Probate Document Styles ───────────────────────────── */
+.probate-title {
+  font-size: 13pt;
+  font-weight: 700;
+  text-decoration: underline;
+  text-align: center;
+  margin-bottom: 6pt;
+}
+.probate-subtitle {
+  font-size: 11pt;
+  font-weight: 700;
+  text-decoration: underline;
+  text-align: center;
+  margin-bottom: 8pt;
+}
+.probate-rule {
+  border: none;
+  border-top: 1px solid #333;
+  margin: 8pt 0;
+}
+.probate-section-label {
+  font-size: 11pt;
+  font-weight: 600;
+  margin-bottom: 4pt;
+}
+.probate-field {
+  font-size: 10.5pt;
+  margin-bottom: 3pt;
+}
+.probate-purpose-text {
+  font-size: 10.5pt;
+  line-height: 1.6;
+}
+.probate-items-label {
+  font-size: 11pt;
+  font-weight: 600;
+  margin-bottom: 8pt;
+}
+.probate-total {
+  font-size: 11pt;
+  font-weight: 700;
+  text-decoration: underline;
+  text-align: right;
+  margin-top: 10pt;
+}
+
+/* ── Dashboard type badges ─────────────────────────────── */
+.dash-badge.valuation-badge {
+  background: #EAF4FF;
+  color: #0055CC;
+}
+.dash-badge.probate-badge {
+  background: #F3EDFF;
+  color: #6A00CC;
+}
+
+/* ── New Document type picker ──────────────────────────── */
+.new-doc-type-btn {
+  flex: 1;
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  background: var(--white);
+  padding: 20px 16px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+  color: var(--dark);
+}
+.new-doc-type-btn:hover {
+  border-color: var(--blue);
+  background: var(--blue-pale);
+}

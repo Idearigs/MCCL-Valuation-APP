@@ -29,6 +29,7 @@ app.use('/api/', rateLimit({
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/valuations', require('./routes/valuations'));
+app.use('/api/probate', require('./routes/probate'));
 
 app.get('/health', (_, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 

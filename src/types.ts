@@ -47,3 +47,41 @@ export const defaultData: ValuationData = {
   images: [],
   ownerSignature: '',
 };
+
+export interface ProbateData {
+  executorName: string;
+  executorAddress: string;
+  contactNumber: string;
+  email: string;
+  deceasedName: string;
+  probateReference: string;
+  dateOfDeath: string;
+  schedulePages: string[];
+  totalMarketValue: string;
+  images: ValuationImage[];
+}
+
+export interface ProbateRecord {
+  id: string;
+  executorName: string;
+  deceasedName: string;
+  dateOfDeath: string;
+  totalMarketValue: string;
+  status: 'draft' | 'complete';
+  createdAt: string;
+  updatedAt: string;
+  data: ProbateData;
+}
+
+export const defaultProbateData: ProbateData = {
+  executorName: '',
+  executorAddress: '',
+  contactNumber: '',
+  email: '',
+  deceasedName: '',
+  probateReference: '',
+  dateOfDeath: new Date().toISOString().split('T')[0],
+  schedulePages: [''],
+  totalMarketValue: '',
+  images: [],
+};

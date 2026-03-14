@@ -46,4 +46,9 @@ export const api = {
   createValuation: (data: unknown) => req<any>('POST', '/api/valuations', data),
   updateValuation: (id: string, data: unknown) => req<any>('PUT', `/api/valuations/${id}`, data),
   deleteValuation: (id: string) => req<void>('DELETE', `/api/valuations/${id}`),
+  getProbates: () => req<any[]>('GET', '/api/probate'),
+  getProbate: (id: string) => req<any>('GET', `/api/probate/${id}`),
+  createProbate: (data: unknown) => req<any>('POST', '/api/probate', data),
+  updateProbate: (id: string, data: unknown) => req<any>('PUT', `/api/probate/${id}`, data),
+  deleteProbate: (id: string) => req<void>('DELETE', `/api/probate/${id}`),
 };

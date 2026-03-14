@@ -3,6 +3,8 @@ import { isLoggedIn } from './api';
 import Dashboard from './Dashboard';
 import Editor from './Editor';
 import Preview from './Preview';
+import ProbateEditor from './ProbateEditor';
+import ProbatePreview from './ProbatePreview';
 import Login from './Login';
 
 function Protected({ children }: { children: React.ReactNode }) {
@@ -17,6 +19,9 @@ export default function App() {
       <Route path="/new" element={<Protected><Editor /></Protected>} />
       <Route path="/edit/:id" element={<Protected><Editor /></Protected>} />
       <Route path="/preview/:id" element={<Protected><Preview /></Protected>} />
+      <Route path="/probate/new" element={<Protected><ProbateEditor /></Protected>} />
+      <Route path="/probate/edit/:id" element={<Protected><ProbateEditor /></Protected>} />
+      <Route path="/probate/preview/:id" element={<Protected><ProbatePreview /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -31,6 +31,27 @@ const SQL = `
   CREATE INDEX IF NOT EXISTS valuations_customer_idx ON valuations(customer_name);
   CREATE INDEX IF NOT EXISTS valuations_date_idx ON valuations(valuation_date);
   CREATE INDEX IF NOT EXISTS valuations_status_idx ON valuations(status);
+
+  CREATE TABLE IF NOT EXISTS probate_valuations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    executor_name VARCHAR(255) NOT NULL DEFAULT '',
+    executor_address TEXT DEFAULT '',
+    contact_number VARCHAR(100) DEFAULT '',
+    email VARCHAR(255) DEFAULT '',
+    deceased_name VARCHAR(255) DEFAULT '',
+    probate_reference VARCHAR(255) DEFAULT '',
+    date_of_death DATE,
+    schedule_html TEXT DEFAULT '',
+    total_market_value VARCHAR(255) DEFAULT '',
+    images JSONB DEFAULT '[]',
+    status VARCHAR(20) DEFAULT 'draft',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  );
+
+  CREATE INDEX IF NOT EXISTS probate_executor_idx ON probate_valuations(executor_name);
+  CREATE INDEX IF NOT EXISTS probate_deceased_idx ON probate_valuations(deceased_name);
+  CREATE INDEX IF NOT EXISTS probate_date_idx ON probate_valuations(date_of_death);
 `;
 
 async function migrate() {
