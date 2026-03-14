@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { ValuationData, ValuationImage } from './types';
 
 // ── Helpers ────────────────────────────────────────────────
@@ -151,13 +151,9 @@ function Page3Contents() {
   );
 }
 
-// ── Pages 4–7: Schedule — dual render ──────────────────────
-// Screen: A4Page wrapper (proper letterhead, page appearance).
-// Print:  thead/tfoot table trick so Chrome repeats letterhead on every page.
-
-// How many mm of content fits per screen A4 page:
-// 297mm total − ~65mm letterhead − ~35mm footer − 6mm top pad − 8mm bottom pad = 183mm
-const SCHEDULE_PAGE_CONTENT_MM = 183;
+// ── Pages 4–N: Schedule ────────────────────────────────────
+// Each schedule page the user created in the editor = one A4Page.
+// No auto-pagination needed — user controls page breaks manually.
 
 function Page4to7Schedule({ data }: { data: ValuationData }) {
   const year = data.date
@@ -165,130 +161,72 @@ function Page4to7Schedule({ data }: { data: ValuationData }) {
     : new Date().getFullYear();
   const hasPricing = data.pricingRows.some(r => r.component || r.estimatedValue);
 
-  const [numPages, setNumPages] = useState(1);
-  const contentMeasureRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!contentMeasureRef.current) return;
-    const pagePx = SCHEDULE_PAGE_CONTENT_MM * (96 / 25.4);
-    const totalPx = contentMeasureRef.current.scrollHeight;
-    setNumPages(Math.max(1, Math.ceil(totalPx / pagePx)));
-  }, [data.scheduleHtml, data.pricingRows, data.totalRange, data.insuranceValue]);
-
-  const scheduleBody = (
-    <>
-      <p className="doc-section-title">Schedule</p>
-
-      {data.scheduleHtml ? (
-        <div className="schedule-html-body"
-          dangerouslySetInnerHTML={{ __html: data.scheduleHtml }} />
-      ) : (
-        <p className="schedule-html-body" style={{ color: '#aaa' }}>
-          (No schedule content entered)
-        </p>
-      )}
-
-      {hasPricing && (
-        <div className="pricing-section">
-          <hr className="schedule-rule" />
-          <p className="pricing-header">
-            Replacement Cost (UK Retail Market {year})
-          </p>
-          <div className="pricing-row-doc">
-            <span style={{ textDecoration: 'underline', fontWeight: 700, fontStyle: 'italic' }}>
-              Component
-            </span>
-          </div>
-          <div className="pricing-row-doc" style={{ marginTop: '-2mm' }}>
-            <span style={{ textDecoration: 'underline', fontWeight: 700, fontStyle: 'italic' }}>
-              Estimated Value
-            </span>
-          </div>
-
-          {data.pricingRows.filter(r => r.component).map(row => (
-            <div key={row.id}>
-              <div className="pricing-row-doc" style={{ marginTop: '4mm' }}>
-                <span style={{ fontWeight: 700, fontStyle: 'italic', textDecoration: 'underline' }}>
-                  {row.component}
-                </span>
-              </div>
-              {row.estimatedValue && (
-                <div className="pricing-row-doc" style={{ marginTop: '-1mm' }}>
-                  <span style={{ fontStyle: 'italic' }}>{row.estimatedValue}</span>
-                </div>
-              )}
-            </div>
-          ))}
-
-          {data.totalRange && (
-            <div style={{ marginTop: '6mm' }}>
-              <p className="pricing-total-label">Total realistic replacement value</p>
-              <p className="pricing-total-value">{data.totalRange}</p>
-            </div>
-          )}
-          {data.insuranceValue && (
-            <>
-              <p className="pricing-insurance-label">Recommended Insurance Value:</p>
-              <p className="pricing-insurance-value">{data.insuranceValue}</p>
-              <p className="pricing-footnote">
-                (Industry standard is to round up slightly to reflect fluctuating diamond
-                costs, bespoke labour, and jewellery inflation.)
-              </p>
-            </>
-          )}
-        </div>
-      )}
-    </>
-  );
+  // Support legacy scheduleHtml (single string) and new schedulePages (array)
+  const pages: string[] = data.schedulePages?.length > 0
+    ? data.schedulePages
+    : (data.scheduleHtml ? [data.scheduleHtml] : ['']);
 
   return (
     <>
-      {/* ── Screen only: multiple A4 pages, each showing a slice of content ── */}
-      <div className="schedule-screen-only">
-        {/* Hidden measurement div — same content width as doc-content (170mm) */}
-        <div style={{ position: 'fixed', top: 0, left: '-9999px', width: '170mm', visibility: 'hidden', pointerEvents: 'none' }}>
-          <div ref={contentMeasureRef} style={{ fontFamily: "'Playfair Display','Times New Roman',Georgia,serif" }}>
-            {scheduleBody}
-          </div>
-        </div>
-        {/* One A4Page per measured page */}
-        {Array.from({ length: numPages }, (_, i) => (
-          <A4Page key={i}>
-            <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-              <div style={{
-                position: 'absolute',
-                top: `${-i * SCHEDULE_PAGE_CONTENT_MM}mm`,
-                left: 0, right: 0,
-              }}>
-                {scheduleBody}
-              </div>
-            </div>
-          </A4Page>
-        ))}
-      </div>
+      {/* One A4Page per schedule page */}
+      {pages.map((pageHtml, i) => (
+        <A4Page key={i}>
+          {i === 0 && <p className="doc-section-title">Schedule</p>}
+          {pageHtml ? (
+            <div className="schedule-html-body"
+              dangerouslySetInnerHTML={{ __html: pageHtml }} />
+          ) : (
+            <p className="schedule-html-body" style={{ color: '#aaa' }}>
+              (No schedule content entered)
+            </p>
+          )}
+        </A4Page>
+      ))}
 
-      {/* ── Print only: table trick repeats letterhead on every physical page ── */}
-      <div className="schedule-print-only">
-        <div className="schedule-page-wrap">
-          <table className="schedule-table">
-            <thead>
-              <tr><td style={{ padding: 0 }}>
-                <div className="schedule-lh-spacer" />
-              </td></tr>
-            </thead>
-            <tfoot>
-              <tr><td style={{ padding: 0 }}>
-                <div className="schedule-lf-spacer" />
-              </td></tr>
-            </tfoot>
-            <tbody>
-              <tr><td style={{ padding: '4mm 20mm 6mm' }}>
-                {scheduleBody}
-              </td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Pricing on its own page when present */}
+      {hasPricing && (
+        <A4Page>
+          <div className="pricing-section" style={{ marginTop: 0 }}>
+            <p className="pricing-header">
+              Replacement Cost (UK Retail Market {year})
+            </p>
+            <div className="pricing-row-doc">
+              <span style={{ textDecoration: 'underline', fontWeight: 700, fontStyle: 'italic' }}>Component</span>
+            </div>
+            <div className="pricing-row-doc" style={{ marginTop: '-2mm' }}>
+              <span style={{ textDecoration: 'underline', fontWeight: 700, fontStyle: 'italic' }}>Estimated Value</span>
+            </div>
+            {data.pricingRows.filter(r => r.component).map(row => (
+              <div key={row.id}>
+                <div className="pricing-row-doc" style={{ marginTop: '4mm' }}>
+                  <span style={{ fontWeight: 700, fontStyle: 'italic', textDecoration: 'underline' }}>{row.component}</span>
+                </div>
+                {row.estimatedValue && (
+                  <div className="pricing-row-doc" style={{ marginTop: '-1mm' }}>
+                    <span style={{ fontStyle: 'italic' }}>{row.estimatedValue}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+            {data.totalRange && (
+              <div style={{ marginTop: '6mm' }}>
+                <p className="pricing-total-label">Total realistic replacement value</p>
+                <p className="pricing-total-value">{data.totalRange}</p>
+              </div>
+            )}
+            {data.insuranceValue && (
+              <>
+                <p className="pricing-insurance-label">Recommended Insurance Value:</p>
+                <p className="pricing-insurance-value">{data.insuranceValue}</p>
+                <p className="pricing-footnote">
+                  (Industry standard is to round up slightly to reflect fluctuating diamond
+                  costs, bespoke labour, and jewellery inflation.)
+                </p>
+              </>
+            )}
+          </div>
+        </A4Page>
+      )}
     </>
   );
 }

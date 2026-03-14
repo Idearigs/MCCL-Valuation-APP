@@ -469,27 +469,64 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 .contents-dots { flex: 1; border-bottom: 1.5px dotted #777; margin: 0 8px; }
 .contents-page { font-style: italic; }
 
-/* Schedule section ── dual render (screen = A4Page, print = table trick) */
-
-/* Screen: show A4Page version, hide table version */
-.schedule-screen-only { display: block; }
-.schedule-print-only  { display: none; }
-
-/* Schedule screen page: auto height since content can exceed one A4 page */
-.schedule-screen-only .doc-page { height: auto; min-height: 297mm; overflow: visible; }
-
-.schedule-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: 'Playfair Display', 'Times New Roman', Georgia, serif;
+/* ── Multi-page schedule editor UI ───────────────────────── */
+.schedule-page-block {
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: var(--surface);
 }
-.schedule-table > thead > tr > td { padding: 0; vertical-align: top; }
-.schedule-table > tfoot > tr > td { padding: 0; vertical-align: bottom; }
-.schedule-table > tbody > tr > td { padding: 0; vertical-align: top; }
-
-/* Spacers no longer used — letterhead images handle spacing */
-.schedule-lh-spacer,
-.schedule-lf-spacer { display: none; }
+.schedule-page-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.schedule-page-block-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dark);
+}
+.page-fill-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.page-fill-track {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.page-fill-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.2s, background 0.2s;
+}
+.page-fill-label {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.btn-add-schedule-page {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px;
+  border: 2px dashed var(--blue);
+  border-radius: 8px;
+  background: var(--blue-pale);
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s;
+}
+.btn-add-schedule-page:hover { background: #d0e8ff; }
 
 .schedule-rule { border: none; border-top: 1px solid #bbb; margin: 8mm 0 3mm; }
 
@@ -621,27 +658,6 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
   /* Never let a doc-page be split mid-print-page */
   .doc-page { break-inside: avoid; page-break-inside: avoid; }
   .doc-page:not(:last-child) { page-break-after: always; break-after: always; }
-
-  /* Print: hide screen version, show table version */
-  .schedule-screen-only { display: none !important; }
-  .schedule-print-only  { display: block !important; }
-
-  /* Schedule table: repeat header & footer on every page */
-  .schedule-table { width: 100%; }
-  .schedule-table thead { display: table-header-group; }
-  .schedule-table tfoot { display: table-footer-group; }
-  .schedule-table tbody { display: table-row-group; }
-
-  /* Schedule spacers match the 65mm/35mm padding used on regular pages */
-  .schedule-lh-spacer { display: block !important; height: 65mm; }
-  .schedule-lf-spacer { display: block !important; height: 35mm; }
-
-  /* Schedule page: start on new page, AND force new page after it ends
-     so Picture Schedule always starts at the top of a fresh page */
-  .schedule-page-wrap {
-    break-before: page; page-break-before: always;
-    break-after: page;  page-break-after: always;
-  }
 
   img { max-width: 100%; }
   a { text-decoration: none; }

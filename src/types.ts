@@ -13,7 +13,8 @@ export interface ValuationData {
   customerName: string;
   customerAddress: string;
   date: string;
-  scheduleHtml: string;
+  scheduleHtml?: string;      // legacy — migrated to schedulePages on load
+  schedulePages: string[];    // one entry per A4 schedule page
   pricingRows: PricingRow[];
   totalRange: string;
   insuranceValue: string;
@@ -38,7 +39,7 @@ export const defaultData: ValuationData = {
   customerName: '',
   customerAddress: '',
   date: new Date().toISOString().split('T')[0],
-  scheduleHtml: '',
+  schedulePages: [''],
   pricingRows: [{ id: '1', component: '', estimatedValue: '' }],
   totalRange: '',
   insuranceValue: '',

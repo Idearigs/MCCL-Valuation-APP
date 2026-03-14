@@ -3,22 +3,22 @@ import { useRef, useEffect } from 'react';
 interface Props {
   value: string;
   onChange: (html: string) => void;
+  onHeightChange?: (px: number) => void;
   placeholder?: string;
 }
 
-export default function RichEditor({ value, onChange, placeholder }: Props) {
+export default function RichEditor({ value, onChange, onHeightChange, placeholder }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   // Only sync from outside on initial mount / external reset
   const lastValue = useRef(value);
 
   useEffect(() => {
     if (!ref.current) return;
-    // Sync external value if it differs from what's in the DOM
-    // (handles load from localStorage or clear)
     if (ref.current.innerHTML !== value) {
       ref.current.innerHTML = value;
       lastValue.current = value;
     }
+    onHeightChange?.(ref.current.scrollHeight);
   }, [value]);
 
   const exec = (cmd: string, val?: string) => {
@@ -37,6 +37,7 @@ export default function RichEditor({ value, onChange, placeholder }: Props) {
     const html = ref.current.innerHTML;
     lastValue.current = html;
     onChange(html);
+    onHeightChange?.(ref.current.scrollHeight);
   };
 
   return (

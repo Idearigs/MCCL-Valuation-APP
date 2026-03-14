@@ -9,13 +9,23 @@ const SIG_KEY = 'mcculloch-valuation-sig';
 function getSignature(): string { return localStorage.getItem(SIG_KEY) ?? ''; }
 function saveSignature(sig: string): void { localStorage.setItem(SIG_KEY, sig); }
 
+// ── Migrate legacy scheduleHtml string → schedulePages array ──
+function parseSchedulePages(raw: string): string[] {
+  if (!raw) return [''];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.length > 0 ? parsed : [''];
+  } catch { /* not JSON — legacy plain HTML */ }
+  return [raw];
+}
+
 // ── snake_case API row → camelCase ValuationData ─────────────
 function apiRowToData(row: any): ValuationData {
   return {
     customerName: row.customer_name || '',
     customerAddress: row.customer_address || '',
     date: row.valuation_date ? row.valuation_date.split('T')[0] : '',
-    scheduleHtml: row.schedule_html || '',
+    schedulePages: parseSchedulePages(row.schedule_html || ''),
     pricingRows: Array.isArray(row.pricing_rows) ? row.pricing_rows : [],
     totalRange: row.total_range || '',
     insuranceValue: row.insurance_value || '',
@@ -33,7 +43,7 @@ function dataToApiPayload(d: ValuationData) {
     customer_name: d.customerName,
     customer_address: d.customerAddress,
     valuation_date: d.date || null,
-    schedule_html: d.scheduleHtml,
+    schedule_html: JSON.stringify(d.schedulePages),
     pricing_rows: d.pricingRows,
     total_range: d.totalRange,
     insurance_value: d.insuranceValue,
@@ -274,6 +284,26 @@ function PricingSection({ rows, totalRange, insuranceValue, numberOfItems, onCha
   );
 }
 
+// ── Schedule page fill indicator ─────────────────────────────
+// A4 content area ≈ 183mm at 96 dpi ≈ 692 px
+const SCHEDULE_PAGE_PX = Math.round(183 * 96 / 25.4);
+
+function PageFillBar({ heightPx }: { heightPx: number }) {
+  const pct = Math.round((heightPx / SCHEDULE_PAGE_PX) * 100);
+  const over = pct > 100;
+  const color = over ? 'var(--danger)' : pct > 85 ? '#FF9500' : 'var(--success)';
+  return (
+    <div className="page-fill-wrap">
+      <div className="page-fill-track">
+        <div className="page-fill-bar" style={{ width: `${Math.min(pct, 100)}%`, background: color }} />
+      </div>
+      <span className="page-fill-label" style={{ color }}>
+        {over ? `⚠ ${pct}% — content overflows! Add a new page below.` : `${pct}% of page used`}
+      </span>
+    </div>
+  );
+}
+
 // ── Main Editor ──────────────────────────────────────────────
 export default function Editor() {
   const { id } = useParams<{ id: string }>();
@@ -283,6 +313,7 @@ export default function Editor() {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState('');
+  const [pageHeights, setPageHeights] = useState<number[]>([0]);
 
   // Load existing record from API
   useEffect(() => {
@@ -295,6 +326,27 @@ export default function Editor() {
   const update = (partial: Partial<ValuationData>) => {
     setData(d => ({ ...d, ...partial }));
     setSaved(false);
+  };
+
+  // ── Schedule page helpers ──
+  const updateSchedulePage = (i: number, html: string) => {
+    const pages = [...data.schedulePages];
+    pages[i] = html;
+    update({ schedulePages: pages });
+  };
+  const addSchedulePageAfter = (i: number) => {
+    const pages = [...data.schedulePages];
+    pages.splice(i + 1, 0, '');
+    update({ schedulePages: pages });
+    setPageHeights(h => { const n = [...h]; n.splice(i + 1, 0, 0); return n; });
+  };
+  const deleteSchedulePage = (i: number) => {
+    const pages = data.schedulePages.filter((_, idx) => idx !== i);
+    update({ schedulePages: pages.length > 0 ? pages : [''] });
+    setPageHeights(h => h.filter((_, idx) => idx !== i));
+  };
+  const setPageHeight = (i: number, px: number) => {
+    setPageHeights(h => { const n = [...h]; n[i] = px; return n; });
   };
 
   const persist = async (d: ValuationData): Promise<string> => {
@@ -397,10 +449,40 @@ export default function Editor() {
             <div className="section-title">Schedule Content</div>
           </div>
           <div className="section-body">
-            <p style={{ fontSize: 13, color: 'var(--grey)', marginBottom: 12 }}>
-              Describe the jewellery items in detail. Use <strong>Bold</strong> for section headings and <strong>• List</strong> for bullet points.
+            <p style={{ fontSize: 13, color: 'var(--grey)', marginBottom: 16 }}>
+              Each page below = one printed A4 page. Fill the content, watch the fill bar, and click <strong>+ Add Page</strong> when a page is full.
             </p>
-            <RichEditor value={data.scheduleHtml} onChange={html => update({ scheduleHtml: html })} />
+            {data.schedulePages.map((page, i) => (
+              <div key={i} className="schedule-page-block">
+                <div className="schedule-page-block-header">
+                  <span className="schedule-page-block-label">Page {i + 1}</span>
+                  {data.schedulePages.length > 1 && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      style={{ color: 'var(--danger)', fontSize: 12 }}
+                      onClick={() => deleteSchedulePage(i)}
+                    >
+                      Remove page
+                    </button>
+                  )}
+                </div>
+                <RichEditor
+                  value={page}
+                  onChange={html => updateSchedulePage(i, html)}
+                  onHeightChange={px => setPageHeight(i, px)}
+                  placeholder={`Schedule content for page ${i + 1}…`}
+                />
+                <PageFillBar heightPx={pageHeights[i] ?? 0} />
+                <button
+                  type="button"
+                  className="btn-add-schedule-page"
+                  onClick={() => addSchedulePageAfter(i)}
+                >
+                  + Add page {i + 2}
+                </button>
+              </div>
+            ))}
           </div>
         </div>
 
