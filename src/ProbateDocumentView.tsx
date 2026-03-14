@@ -120,13 +120,24 @@ function PhotosPage({ data }: { data: ProbateData }) {
   if (images.length === 0) return null;
   return (
     <A4Page>
-      <p className="doc-section-title">Picture Schedule</p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4mm' }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, 1fr)',
+        gap: '3mm',
+      }}>
         {images.map((img, i) => (
-          <div key={i} style={{ width: `calc(${img.width}% - 4mm)`, pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+          <div key={i} style={{ position: 'relative', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+            <div style={{
+              position: 'absolute', top: 3, left: 3,
+              background: 'rgba(0,0,0,0.6)', color: '#fff',
+              fontSize: '7pt', fontWeight: 700,
+              width: 16, height: 16, borderRadius: 3,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 1,
+            }}>{i + 1}</div>
             <img src={img.src} alt={`Item ${i + 1}`}
-              style={{ width: '100%', maxHeight: '80mm', objectFit: 'contain',
-                border: '1px solid #ddd', borderRadius: 4 }} />
+              style={{ width: '100%', aspectRatio: '1', objectFit: 'cover',
+                border: '1px solid #ccc', borderRadius: 3, display: 'block' }} />
           </div>
         ))}
       </div>

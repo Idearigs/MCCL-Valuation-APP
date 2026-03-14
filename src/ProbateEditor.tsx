@@ -91,6 +91,7 @@ function ImageUploader({ images, onChange }: { images: ValuationImage[]; onChang
         <div className="image-grid">
           {images.map((img, i) => (
             <div className="image-thumb" key={i}>
+              <div className="image-thumb-num">{i + 1}</div>
               <img src={img.src} alt={`Item ${i + 1}`} />
               <button className="image-remove" onClick={() => onChange(images.filter((_, idx) => idx !== i))}>✕</button>
               <div className="image-size-controls">
