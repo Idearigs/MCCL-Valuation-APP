@@ -67,10 +67,19 @@ function ImageUploader({ images, onChange }: { images: ValuationImage[]; onChang
 
   const addFiles = (files: FileList | null) => {
     if (!files) return;
-    Array.from(files).forEach(file => {
-      if (!file.type.startsWith('image/')) return;
+    const fileArray = Array.from(files).filter(f => f.type.startsWith('image/'));
+    if (fileArray.length === 0) return;
+    const results: string[] = new Array(fileArray.length);
+    let completed = 0;
+    fileArray.forEach((file, idx) => {
       const reader = new FileReader();
-      reader.onload = e => onChange([...images, { src: e.target?.result as string, width: 50 }]);
+      reader.onload = e => {
+        results[idx] = e.target?.result as string;
+        completed++;
+        if (completed === fileArray.length) {
+          onChange([...images, ...results.map(src => ({ src, width: 50 }))]);
+        }
+      };
       reader.readAsDataURL(file);
     });
   };
