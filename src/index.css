@@ -322,13 +322,12 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 .doc-page {
   background: #fff;
   width: 210mm;
-  height: 297mm;
+  min-height: 297mm;
   padding: 0;
   box-shadow: 0 4px 24px rgba(0,0,0,0.15);
   display: flex;
   flex-direction: column;
   font-family: 'Playfair Display', 'Times New Roman', Georgia, serif;
-  overflow: hidden;
 }
 
 /* Real letterhead image strips */
@@ -383,8 +382,6 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 .doc-content {
   flex: 1;
   padding: 6mm 20mm 8mm;
-  display: flex;
-  flex-direction: column;
 }
 
 .doc-section-title {
