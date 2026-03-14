@@ -860,6 +860,70 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
   margin-bottom: 12px;
 }
 
+/* ── PIN Lock ──────────────────────────────────────────── */
+.pin-display {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 8px 0 24px;
+}
+.pin-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+.pin-dot--filled {
+  background: var(--dark);
+  border-color: var(--dark);
+}
+.pin-display--shake {
+  animation: pin-shake 0.45s ease;
+}
+@keyframes pin-shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+.pin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 4px;
+}
+.pin-key {
+  height: 60px;
+  border-radius: 14px;
+  border: none;
+  background: var(--surface);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--dark);
+  cursor: pointer;
+  transition: background 0.12s, transform 0.1s;
+  user-select: none;
+}
+.pin-key:active:not(:disabled) {
+  background: #E0E0E5;
+  transform: scale(0.95);
+}
+.pin-key:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.pin-key--ghost {
+  background: transparent;
+  pointer-events: none;
+}
+.pin-key--back {
+  font-size: 20px;
+  color: var(--grey);
+}
+
 /* ── Date Filters ──────────────────────────────────────── */
 .dash-date-filters {
   display: flex;
