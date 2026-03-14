@@ -74,7 +74,7 @@ function ImageUploader({ images, onChange }: { images: ValuationImage[]; onChang
 
   return (
     <div>
-      <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }}
+      <input ref={inputRef} type="file" accept="image/*" multiple style={{ display: 'none' }}
         onChange={e => addFiles(e.target.files)} />
       <div
         className={`image-dropzone${dragging ? ' dragover' : ''}`}
