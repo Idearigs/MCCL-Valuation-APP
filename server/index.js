@@ -35,8 +35,10 @@ app.get('/health', (_, res) => res.json({ status: 'ok', ts: new Date().toISOStri
 
 // Serve React frontend
 const clientDist = path.join(__dirname, 'dist');
-app.use(express.static(clientDist));
+// Hashed assets (JS/CSS) get long cache; index.html never cached
+app.use(express.static(clientDist, { etag: false, maxAge: '1y', immutable: true }));
 app.get('*', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
   res.sendFile(path.join(clientDist, 'index.html'));
 });
 
