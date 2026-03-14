@@ -4,13 +4,23 @@ import { api } from './api';
 import { ValuationData } from './types';
 import DocumentView from './DocumentView';
 
+// ── Migrate legacy scheduleHtml string → schedulePages array ──
+function parseSchedulePages(raw: string): string[] {
+  if (!raw) return [''];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.length > 0 ? parsed : [''];
+  } catch { /* legacy plain HTML */ }
+  return [raw];
+}
+
 // ── snake_case API row → camelCase ValuationData ─────────────
 function apiRowToData(row: any): ValuationData {
   return {
     customerName: row.customer_name || '',
     customerAddress: row.customer_address || '',
     date: row.valuation_date ? row.valuation_date.split('T')[0] : '',
-    scheduleHtml: row.schedule_html || '',
+    schedulePages: parseSchedulePages(row.schedule_html || ''),
     pricingRows: Array.isArray(row.pricing_rows) ? row.pricing_rows : [],
     totalRange: row.total_range || '',
     insuranceValue: row.insurance_value || '',
