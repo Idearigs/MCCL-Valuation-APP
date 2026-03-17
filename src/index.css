@@ -1152,7 +1152,33 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
   font-weight: 700;
   text-decoration: underline;
   text-align: right;
-  margin-top: 10pt;
+  margin-top: 12pt;
+  padding-top: 6pt;
+  border-top: 1px solid #333;
+}
+
+/* ── Table inside probate schedule ─────────────────────── */
+.probate-schedule-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10.5pt;
+  margin-bottom: 6pt;
+}
+.probate-schedule-body table th,
+.probate-schedule-body table td {
+  padding: 4pt 12pt 4pt 0;
+  text-align: left;
+  vertical-align: top;
+}
+.probate-schedule-body table th {
+  font-weight: 700;
+  border-bottom: 1px solid #333;
+  padding-bottom: 5pt;
+}
+.probate-schedule-body table td:last-child,
+.probate-schedule-body table th:last-child {
+  text-align: right;
+  padding-right: 0;
 }
 
 /* ── Dashboard type badges ─────────────────────────────── */

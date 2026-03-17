@@ -84,10 +84,23 @@ function parseSchedulePages(raw: string): string[] {
   return [raw];
 }
 
+// Fix common mojibake: £ stored as UTF-8 bytes decoded as Latin-1 → Â£
+function fixEncoding(html: string): string {
+  return html
+    .replace(/Â£/g, '£')
+    .replace(/Â€/g, '€')
+    .replace(/â€™/g, '\u2019')
+    .replace(/â€œ/g, '\u201C')
+    .replace(/â€/g, '\u201D');
+}
+
 function SchedulePages({ data }: { data: ProbateData }) {
   const pages: string[] = data.schedulePages?.length > 0
     ? data.schedulePages
     : parseSchedulePages('');
+
+  // Strip mojibake from total value too
+  const total = fixEncoding(data.totalMarketValue || '');
 
   return (
     <>
@@ -95,14 +108,15 @@ function SchedulePages({ data }: { data: ProbateData }) {
         <A4Page key={i}>
           {i === 0 && <div className="probate-items-label">Items :</div>}
           {pageHtml ? (
-            <div className="schedule-html-body" dangerouslySetInnerHTML={{ __html: pageHtml }} />
+            <div className="schedule-html-body probate-schedule-body"
+              dangerouslySetInnerHTML={{ __html: fixEncoding(pageHtml) }} />
           ) : (
             <p className="schedule-html-body" style={{ color: '#aaa' }}>(No items entered)</p>
           )}
           {/* Total on last page */}
-          {i === pages.length - 1 && data.totalMarketValue && (
+          {i === pages.length - 1 && (
             <div className="probate-total">
-              Total Estimated Market Value: {data.totalMarketValue}
+              <strong>Total Estimated Market Value: {total || '—'}</strong>
             </div>
           )}
         </A4Page>
