@@ -1207,3 +1207,31 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
   border-color: var(--blue);
   background: var(--blue-pale);
 }
+
+/* ── Probate Declaration page ──────────────────────────── */
+.probate-declaration-bullets p {
+  font-size: 10.5pt;
+  line-height: 1.6;
+  margin-bottom: 6pt;
+}
+.probate-declaration-text {
+  font-size: 10.5pt;
+  line-height: 1.6;
+  margin: 6pt 0 16pt;
+}
+.probate-declaration-fields p {
+  font-size: 10.5pt;
+  margin-bottom: 10pt;
+  line-height: 1.5;
+}
+.probate-sig-line {
+  display: flex;
+  align-items: flex-end;
+  gap: 8pt;
+}
+.probate-sig-blank {
+  display: inline-block;
+  width: 160pt;
+  border-bottom: 1px solid #333;
+  height: 24pt;
+}

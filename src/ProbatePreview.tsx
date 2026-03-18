@@ -35,6 +35,7 @@ export default function ProbatePreview() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [data, setData] = useState<ProbateData | null>(null);
+  const [createdAt, setCreatedAt] = useState('');
   const [notFound, setNotFound] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const docRef = useRef<HTMLDivElement>(null);
@@ -82,7 +83,7 @@ export default function ProbatePreview() {
   useEffect(() => {
     if (!id) { setNotFound(true); return; }
     api.getProbate(id)
-      .then(row => setData(apiRowToData(row)))
+      .then(row => { setData(apiRowToData(row)); setCreatedAt(row.created_at || ''); })
       .catch(() => setNotFound(true));
   }, [id]);
 
@@ -163,7 +164,7 @@ export default function ProbatePreview() {
       </div>
       <div ref={outerRef} style={{ width: '100%', overflow: 'hidden' }}>
         <div ref={docRef}>
-          <ProbateDocumentView data={data} />
+          <ProbateDocumentView data={data} createdAt={createdAt} />
         </div>
       </div>
     </div>

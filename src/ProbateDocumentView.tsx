@@ -159,14 +159,49 @@ function PhotosPage({ data }: { data: ProbateData }) {
   );
 }
 
+// ── Declaration page ───────────────────────────────────────
+
+function DeclarationPage({ createdAt }: { createdAt: string }) {
+  const dateDisplay = createdAt
+    ? new Date(createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : '';
+
+  return (
+    <A4Page>
+      <hr className="probate-rule" />
+      <div className="probate-section-label">Assumptions &amp; Notes:</div>
+      <div className="probate-declaration-bullets">
+        <p>• Items have been inspected [in person/from photographs/supplied list], and where applicable, measurements and grading are approximate.</p>
+        <p>• No laboratory testing or hallmark verification has been undertaken unless otherwise stated.</p>
+        <p>• Valuation reflects the condition and market demand at the time of assessment.</p>
+      </div>
+      <hr className="probate-rule" style={{ marginTop: '14pt' }} />
+
+      <div className="probate-section-label" style={{ marginTop: '6pt' }}>Declaration:</div>
+      <div className="probate-declaration-text">
+        I certify that this valuation has been carried out independently and to the best of my professional knowledge.
+      </div>
+
+      <div className="probate-declaration-fields">
+        <p>Valuer's Name: Hasitha De Silva</p>
+        <p>Qualifications: BA (Hons) Jewellery Manufacturing and Design.</p>
+        <p>University of Kent at Canterbury</p>
+        <p className="probate-sig-line">Signature: <span className="probate-sig-blank" /></p>
+        <p>Date: {dateDisplay}</p>
+      </div>
+    </A4Page>
+  );
+}
+
 // ── Main export ────────────────────────────────────────────
 
-export default function ProbateDocumentView({ data }: { data: ProbateData }) {
+export default function ProbateDocumentView({ data, createdAt }: { data: ProbateData; createdAt?: string }) {
   return (
     <div className="doc-pages-wrap">
       <Page1Cover data={data} />
       <SchedulePages data={data} />
       <PhotosPage data={data} />
+      <DeclarationPage createdAt={createdAt || ''} />
     </div>
   );
 }
