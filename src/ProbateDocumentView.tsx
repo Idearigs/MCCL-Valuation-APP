@@ -132,30 +132,37 @@ function PhotosPage({ data }: { data: ProbateData }) {
     typeof img === 'string' ? { src: img, width: 50 } : img
   );
   if (images.length === 0) return null;
+
+  const PER_PAGE = 12;
+  const chunks: ValuationImage[][] = [];
+  for (let i = 0; i < images.length; i += PER_PAGE) chunks.push(images.slice(i, i + PER_PAGE));
+
   return (
-    <A4Page>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '3mm',
-      }}>
-        {images.map((img, i) => (
-          <div key={i} style={{ position: 'relative', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-            <div style={{
-              position: 'absolute', top: 3, left: 3,
-              background: 'rgba(0,0,0,0.6)', color: '#fff',
-              fontSize: '7pt', fontWeight: 700,
-              width: 16, height: 16, borderRadius: 3,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              zIndex: 1,
-            }}>{i + 1}</div>
-            <img src={img.src} alt={`Item ${i + 1}`}
-              style={{ width: '100%', aspectRatio: '1', objectFit: 'cover',
-                border: '1px solid #ccc', borderRadius: 3, display: 'block' }} />
+    <>
+      {chunks.map((chunk, pageIdx) => (
+        <A4Page key={pageIdx}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '3mm' }}>
+            {chunk.map((img, i) => {
+              const globalIdx = pageIdx * PER_PAGE + i;
+              return (
+                <div key={i} style={{ position: 'relative', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+                  <div style={{
+                    position: 'absolute', top: 3, left: 3,
+                    background: 'rgba(0,0,0,0.6)', color: '#fff',
+                    fontSize: '7pt', fontWeight: 700,
+                    width: 16, height: 16, borderRadius: 3,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1,
+                  }}>{globalIdx + 1}</div>
+                  <img src={img.src} alt={`Item ${globalIdx + 1}`}
+                    style={{ width: '100%', aspectRatio: '1', objectFit: 'cover',
+                      border: '1px solid #ccc', borderRadius: 3, display: 'block' }} />
+                </div>
+              );
+            })}
           </div>
-        ))}
-      </div>
-    </A4Page>
+        </A4Page>
+      ))}
+    </>
   );
 }
 

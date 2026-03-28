@@ -47,38 +47,34 @@ function dataToApiPayload(d: ProbateData) {
 }
 
 // ── Image Uploader ───────────────────────────────────────
-const SIZE_OPTIONS = [
-  { label: 'S', value: 25 },
-  { label: 'M', value: 50 },
-  { label: 'L', value: 75 },
-  { label: 'Full', value: 100 },
-];
 
 function ImageUploader({ images, onChange }: { images: ValuationImage[]; onChange: (imgs: ValuationImage[]) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
 
-  const addFiles = (files: FileList | null) => {
+  const addFiles = async (files: FileList | null) => {
     if (!files) return;
     const fileArray = Array.from(files).filter(f => f.type.startsWith('image/'));
     if (fileArray.length === 0) return;
-    const results: string[] = new Array(fileArray.length);
-    let completed = 0;
-    fileArray.forEach((file, idx) => {
-      const reader = new FileReader();
-      reader.onload = e => {
-        results[idx] = e.target?.result as string;
-        completed++;
-        if (completed === fileArray.length) {
-          onChange([...images, ...results.map(src => ({ src, width: 50 }))]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const setWidth = (i: number, width: number) => {
-    onChange(images.map((img, idx) => idx === i ? { ...img, width } : img));
+    setUploading(true);
+    setUploadProgress(`Uploading 0 / ${fileArray.length}…`);
+    try {
+      const urls: string[] = [];
+      for (let i = 0; i < fileArray.length; i++) {
+        const url = await api.uploadImage(fileArray[i]);
+        urls.push(url);
+        setUploadProgress(`Uploading ${i + 1} / ${fileArray.length}…`);
+      }
+      onChange([...images, ...urls.map(src => ({ src, width: 50 }))]);
+    } catch {
+      alert('Image upload failed. Please try again.');
+    } finally {
+      setUploading(false);
+      setUploadProgress('');
+      if (inputRef.current) inputRef.current.value = '';
+    }
   };
 
   return (
@@ -87,14 +83,20 @@ function ImageUploader({ images, onChange }: { images: ValuationImage[]; onChang
         onChange={e => addFiles(e.target.files)} />
       <div
         className={`image-dropzone${dragging ? ' dragover' : ''}`}
-        onClick={() => inputRef.current?.click()}
+        onClick={() => !uploading && inputRef.current?.click()}
         onDragOver={e => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={e => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
       >
         <div className="image-dropzone-icon">📷</div>
-        <p style={{ fontWeight: 600 }}>Click or drag images here</p>
-        <p>JPEG, PNG, WEBP supported</p>
+        {uploading ? (
+          <p style={{ fontWeight: 600, color: 'var(--primary)' }}>{uploadProgress}</p>
+        ) : (
+          <>
+            <p style={{ fontWeight: 600 }}>Click or drag images here</p>
+            <p>Select multiple at once — JPEG, PNG, WEBP supported</p>
+          </>
+        )}
       </div>
       {images.length > 0 && (
         <div className="image-grid">
@@ -103,19 +105,14 @@ function ImageUploader({ images, onChange }: { images: ValuationImage[]; onChang
               <div className="image-thumb-num">{i + 1}</div>
               <img src={img.src} alt={`Item ${i + 1}`} />
               <button className="image-remove" onClick={() => onChange(images.filter((_, idx) => idx !== i))}>✕</button>
-              <div className="image-size-controls">
-                {SIZE_OPTIONS.map(opt => (
-                  <button
-                    key={opt.value}
-                    className={`image-size-btn${img.width === opt.value ? ' active' : ''}`}
-                    onClick={() => setWidth(i, opt.value)}
-                    title={`${opt.value}% width`}
-                  >{opt.label}</button>
-                ))}
-              </div>
             </div>
           ))}
         </div>
+      )}
+      {images.length > 0 && (
+        <p style={{ fontSize: 12, color: 'var(--grey)', marginTop: 8 }}>
+          {images.length} image{images.length !== 1 ? 's' : ''} — {Math.ceil(images.length / 12)} photo page{Math.ceil(images.length / 12) !== 1 ? 's' : ''} in document
+        </p>
       )}
     </div>
   );

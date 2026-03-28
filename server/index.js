@@ -3,9 +3,28 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 const rateLimit = require('express-rate-limit');
+const requireAuth = require('./middleware/auth');
 const migrate = require('./migrate');
 const seed = require('./seed');
+
+// Uploads directory — mount as persistent volume in Coolify: /app/uploads
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: uploadsDir,
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+      cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+    },
+  }),
+  limits: { fileSize: 15 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => cb(null, file.mimetype.startsWith('image/')),
+});
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -30,6 +49,13 @@ app.use('/api/', rateLimit({
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/valuations', require('./routes/valuations'));
 app.use('/api/probate', require('./routes/probate'));
+
+// Image upload
+app.post('/api/upload', requireAuth, upload.single('image'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  res.json({ url: `/uploads/${req.file.filename}` });
+});
+app.use('/uploads', express.static(uploadsDir, { maxAge: '1y', immutable: true }));
 
 app.get('/health', (_, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 
