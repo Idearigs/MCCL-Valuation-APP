@@ -265,8 +265,47 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
   border-color: var(--blue);
   background: var(--blue-pale);
 }
+.image-dropzone.uploading { cursor: not-allowed; opacity: 0.7; }
 .image-dropzone-icon { font-size: 36px; margin-bottom: 8px; }
 .image-dropzone p { font-size: 14px; color: var(--grey); }
+
+/* ── Upload overlay ───────────────────────────────────────── */
+.upload-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+}
+.upload-overlay-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 40px 48px;
+  text-align: center;
+  min-width: 300px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+}
+.upload-spinner {
+  width: 52px; height: 52px;
+  border: 4px solid #E5E5EA;
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  margin: 0 auto 20px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.upload-overlay-title {
+  font-size: 17px; font-weight: 700; color: var(--dark); margin-bottom: 6px;
+}
+.upload-overlay-sub {
+  font-size: 14px; color: var(--grey); margin-bottom: 20px;
+}
+.upload-progress-track {
+  height: 6px; background: #E5E5EA; border-radius: 99px; overflow: hidden;
+}
+.upload-progress-bar {
+  height: 100%; background: var(--blue); border-radius: 99px;
+  transition: width 0.2s ease;
+}
 
 .image-grid {
   display: grid;

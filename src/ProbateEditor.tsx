@@ -51,34 +51,50 @@ function dataToApiPayload(d: ProbateData) {
 function ImageUploader({ images, onChange }: { images: ValuationImage[]; onChange: (imgs: ValuationImage[]) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState('');
+  const [uploadDone, setUploadDone] = useState(0);
+  const [uploadTotal, setUploadTotal] = useState(0);
+
+  const uploading = uploadTotal > 0;
 
   const addFiles = async (files: FileList | null) => {
     if (!files) return;
     const fileArray = Array.from(files).filter(f => f.type.startsWith('image/'));
     if (fileArray.length === 0) return;
-    setUploading(true);
-    setUploadProgress(`Uploading 0 / ${fileArray.length}…`);
+    setUploadDone(0);
+    setUploadTotal(fileArray.length);
     try {
       const urls: string[] = [];
       for (let i = 0; i < fileArray.length; i++) {
         const url = await api.uploadImage(fileArray[i]);
         urls.push(url);
-        setUploadProgress(`Uploading ${i + 1} / ${fileArray.length}…`);
+        setUploadDone(i + 1);
       }
       onChange([...images, ...urls.map(src => ({ src, width: 50 }))]);
     } catch {
       alert('Image upload failed. Please try again.');
     } finally {
-      setUploading(false);
-      setUploadProgress('');
+      setUploadTotal(0);
+      setUploadDone(0);
       if (inputRef.current) inputRef.current.value = '';
     }
   };
 
+  const pct = uploadTotal > 0 ? Math.round((uploadDone / uploadTotal) * 100) : 0;
+
   return (
     <div>
+      {uploading && (
+        <div className="upload-overlay">
+          <div className="upload-overlay-card">
+            <div className="upload-spinner" />
+            <div className="upload-overlay-title">Uploading Images…</div>
+            <div className="upload-overlay-sub">{uploadDone} of {uploadTotal} done</div>
+            <div className="upload-progress-track">
+              <div className="upload-progress-bar" style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+        </div>
+      )}
       <input ref={inputRef} type="file" accept="image/*" multiple style={{ display: 'none' }}
         onChange={e => addFiles(e.target.files)} />
       <div
@@ -89,14 +105,8 @@ function ImageUploader({ images, onChange }: { images: ValuationImage[]; onChang
         onDrop={e => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
       >
         <div className="image-dropzone-icon">📷</div>
-        {uploading ? (
-          <p style={{ fontWeight: 600, color: 'var(--primary)' }}>{uploadProgress}</p>
-        ) : (
-          <>
-            <p style={{ fontWeight: 600 }}>Click or drag images here</p>
-            <p>Select multiple at once — JPEG, PNG, WEBP supported</p>
-          </>
-        )}
+        <p style={{ fontWeight: 600 }}>Click or drag images here</p>
+        <p>Select multiple at once — JPEG, PNG, WEBP supported</p>
       </div>
       {images.length > 0 && (
         <div className="image-grid">
