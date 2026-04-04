@@ -30,6 +30,7 @@ const upload = multer({
 Sentry.init({
   dsn: 'https://0a25de57b914e576533e04dfc7f1b73d@o4511162586759168.ingest.us.sentry.io/4511162676084736',
   tracesSampleRate: 1.0,
+  integrations: [Sentry.expressIntegration()],
 });
 
 const app = express();
