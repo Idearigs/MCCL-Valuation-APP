@@ -1,4 +1,5 @@
 require('dotenv').config();
+const Sentry = require('@sentry/node');
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -24,6 +25,11 @@ const upload = multer({
   }),
   limits: { fileSize: 15 * 1024 * 1024 },
   fileFilter: (req, file, cb) => cb(null, file.mimetype.startsWith('image/')),
+});
+
+Sentry.init({
+  dsn: 'https://0a25de57b914e576533e04dfc7f1b73d@o4511162586759168.ingest.us.sentry.io/4511162676084736',
+  tracesSampleRate: 1.0,
 });
 
 const app = express();
@@ -74,6 +80,9 @@ app.get('*', (_req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   res.sendFile(path.join(clientDist, 'index.html'));
 });
+
+// Sentry error handler — must be before other error handlers
+Sentry.setupExpressErrorHandler(app);
 
 app.use((err, _req, res, _next) => {
   console.error(err);
