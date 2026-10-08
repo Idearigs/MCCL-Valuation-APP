@@ -171,8 +171,8 @@ export function ValuationDocument(p: ValuationTemplateProps) {
         </div>
       </Section>
 
-      <Section id="insurer" markers={p.markers}>
-        <p className="doc-section-title" style={{ marginBottom: '6mm' }}>Insurer Notice</p>
+      <Section id="insurer" markers={p.markers} className="insurer">
+        <p className="doc-section-title" style={{ marginBottom: '4mm' }}>Insurer Notice</p>
         <div className="insurer-header-text">
           <div>PLEASE SEND THIS NOTICE TO YOUR INSURANCE PROVIDER</div>
           <div>INSURER INFORMATION: PLEASE READ CAREFULLY</div>
@@ -183,7 +183,7 @@ export function ValuationDocument(p: ValuationTemplateProps) {
           <div style={{ fontWeight: 700 }}>Total value: {insurance}</div>
         </div>
         <hr className="insurer-rule" />
-        <div className="insurer-row" style={{ marginBottom: '4mm' }}>Property Of</div>
+        <div className="insurer-row" style={{ marginBottom: '2mm' }}>Property Of</div>
         <div className="insurer-row" style={{ fontWeight: 700 }}>
           <div>{d.customerName}</div>
           <AddressLines text={d.customerAddress} />
