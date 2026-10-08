@@ -4,6 +4,7 @@ import { ValuationData, PricingRow, defaultData } from './types';
 import { api } from './api';
 import RichEditor from './RichEditor';
 import ImageUploader from './ImageUploader';
+import EditorTopBar from './EditorTopBar';
 import { toValuationData, valuationPayload, syncSignature } from './docMapping';
 
 // ── Signature localStorage helpers (UX convenience only) ────
@@ -263,22 +264,11 @@ export default function Editor() {
 
   return (
     <div className="form-shell">
-      {/* Header */}
-      <header className="form-header">
-        <div className="form-header-inner">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/')}>← Dashboard</button>
-            <div className="form-brand">
-              {id ? `Edit — ${data.customerName || 'Valuation'}` : 'New Valuation'}
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            {saved && <span style={{ fontSize: 13, color: 'var(--success)', fontWeight: 600 }}>✓ Saved</span>}
-            <button className="btn btn-ghost btn-sm" onClick={handleSave} disabled={saving}>Save Draft</button>
-            <button className="btn btn-primary btn-sm" onClick={handlePreview} disabled={saving}>Preview & Print →</button>
-          </div>
-        </div>
-      </header>
+      <EditorTopBar
+        title={id ? data.customerName || 'Valuation' : 'New valuation'}
+        saved={saved} saving={saving}
+        onBack={() => navigate('/')} onSave={handleSave} onPreview={handlePreview}
+      />
 
       <main className="form-main">
         {/* 1. Customer Details */}

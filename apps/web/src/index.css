@@ -1298,3 +1298,61 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 }
 .pdf-page canvas { width: 100%; height: 100%; display: block; }
 .pdf-print-tip { color: var(--dark); background: #FFF6E0; border-radius: 8px; max-width: 210mm; margin: 8px auto 0; padding: 8px 12px; }
+
+/* ── Top bar (preview + editors) ──────────────────────────── */
+.tb-bar {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(255, 255, 255, 0.94);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.tb-inner {
+  max-width: 1100px; margin: 0 auto; padding: 10px 16px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
+}
+.tb-heading-row { flex: 1 1 260px; min-width: 0; display: flex; align-items: center; gap: 10px; }
+.tb-heading { flex: 1; min-width: 0; }
+.tb-title {
+  font-size: 15px; font-weight: 650; color: var(--dark); line-height: 1.25;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tb-sub { font-size: 12px; color: var(--grey); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tb-sub-ok { color: var(--success); }
+.tb-actions-row { display: flex; align-items: center; gap: 10px; flex: 0 1 auto; }
+.tb-buttons { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+.tb-icon-btn, .tb-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 38px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--white); color: var(--dark); cursor: pointer;
+  font: 600 14px 'Inter', sans-serif; text-decoration: none; white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.tb-icon-btn { width: 38px; padding: 0; flex-shrink: 0; }
+.tb-btn { padding: 0 14px; }
+.tb-icon-btn:hover, .tb-btn:hover { background: var(--surface); }
+.tb-btn:disabled { opacity: 0.45; cursor: default; }
+.tb-btn-quiet { border-color: transparent; background: transparent; flex-shrink: 0; }
+.tb-btn-primary { background: var(--blue); border-color: var(--blue); color: #fff; box-shadow: 0 1px 2px rgba(0, 122, 255, 0.25); }
+.tb-btn-primary:hover { background: #0066d6; border-color: #0066d6; }
+
+/* Letterhead / Pre-printed switch */
+.tb-seg { display: inline-flex; padding: 3px; gap: 2px; background: var(--surface); border-radius: 11px; border: 1px solid var(--border); }
+.tb-seg button {
+  height: 30px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent;
+  font: 600 13px 'Inter', sans-serif; color: var(--grey); cursor: pointer; white-space: nowrap;
+}
+.tb-seg button.on { background: var(--white); color: var(--dark); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+
+/* Phones: two tidy rows; secondary labels collapse to icons */
+@media (max-width: 720px) {
+  .tb-inner { padding: 8px 12px; gap: 8px; }
+  .tb-actions-row { flex: 1 1 100%; }
+  .tb-inner-editor .tb-heading-row { flex: 1 1 0; }
+}
+@media (max-width: 480px) {
+  .tb-label { display: none; }
+  .tb-btn { padding: 0 11px; }
+  .tb-seg button { padding: 0 10px; }
+}

@@ -4,6 +4,7 @@ import { ProbateData, defaultProbateData } from './types';
 import { api } from './api';
 import RichEditor from './RichEditor';
 import ImageUploader from './ImageUploader';
+import EditorTopBar from './EditorTopBar';
 import { toProbateData, probatePayload } from './docMapping';
 
 // ── Main Editor ──────────────────────────────────────────
@@ -72,21 +73,11 @@ export default function ProbateEditor() {
 
   return (
     <div className="form-shell">
-      <header className="form-header">
-        <div className="form-header-inner">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/')}>← Dashboard</button>
-            <div className="form-brand">
-              {id ? `Edit — ${data.deceasedName || 'Probate'}` : 'New Probate Valuation'}
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            {saved && <span style={{ fontSize: 13, color: 'var(--success)', fontWeight: 600 }}>✓ Saved</span>}
-            <button className="btn btn-ghost btn-sm" onClick={handleSave} disabled={saving}>Save Draft</button>
-            <button className="btn btn-primary btn-sm" onClick={handlePreview} disabled={saving}>Preview & Print →</button>
-          </div>
-        </div>
-      </header>
+      <EditorTopBar
+        title={id ? data.deceasedName || 'Probate' : 'New probate valuation'}
+        saved={saved} saving={saving}
+        onBack={() => navigate('/')} onSave={handleSave} onPreview={handlePreview}
+      />
 
       <main className="form-main">
         {/* 1. Client Details */}
