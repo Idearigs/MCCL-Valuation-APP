@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { rm } from 'node:fs/promises';
+import { readdir, rm } from 'node:fs/promises';
 import EmbeddedPostgres from 'embedded-postgres';
 import type { TestProject } from 'vitest/node';
 
@@ -7,8 +7,13 @@ const PORT = 54331;
 
 /** Starts a throwaway PostgreSQL for the test run. */
 export default async function setup(project: TestProject) {
-  const dataDir = path.resolve(import.meta.dirname, '../../../.data/test-pg');
-  await rm(dataDir, { recursive: true, force: true });
+  // A fresh folder per run: an interrupted earlier run can't block this one (on Windows
+  // Postgres ties its shared memory to the data folder path).
+  const root = path.resolve(import.meta.dirname, '../../../.data');
+  await Promise.all((await readdir(root).catch(() => []))
+    .filter(d => d.startsWith('test-pg'))
+    .map(d => rm(path.join(root, d), { recursive: true, force: true }).catch(() => undefined)));
+  const dataDir = path.join(root, `test-pg-${process.pid}`);
 
   const pg = new EmbeddedPostgres({
     databaseDir: dataDir, user: 'test', password: 'test', port: PORT, persistent: false,

@@ -11,6 +11,7 @@ await build({
     server: 'src/server.ts',
     instrument: 'src/instrument.ts',
     'set-credentials': 'scripts/set-credentials.ts',
+    'import-v1': 'scripts/import-v1.ts',
   },
   outdir: 'dist',
   bundle: true,

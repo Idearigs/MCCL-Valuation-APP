@@ -195,7 +195,8 @@ export default function Dashboard() {
                         <td>
                           <div className="dash-actions">
                             <button className="dash-action-btn" onClick={() => navigate(editPath(r))} title="Edit">✏️</button>
-                            <button className="dash-action-btn" onClick={() => navigate(previewPath(r))} title="Preview & Print">🖨️</button>
+                            <button className="dash-action-btn" onClick={() => navigate(previewPath(r))} title="View document">👁️</button>
+                            <button className="dash-action-btn" onClick={() => navigate(`${previewPath(r)}?print=true`)} title="Print">🖨️</button>
                             <button className="dash-action-btn download" onClick={() => navigate(`${previewPath(r)}?download=true`)} title="Download PDF">⬇</button>
                             <button className="dash-action-btn danger" onClick={() => setDeleteConfirm({ id: r.id, type: r._type })} title="Delete">🗑️</button>
                           </div>
@@ -226,7 +227,7 @@ export default function Dashboard() {
                     </div>
                     <div className="dash-card-actions">
                       <button className="dash-ic-btn" onClick={() => navigate(editPath(r))} title="Edit"><IcEdit /></button>
-                      <button className="dash-ic-btn" onClick={() => navigate(previewPath(r))} title="Preview"><IcEye /></button>
+                      <button className="dash-ic-btn" onClick={() => navigate(previewPath(r))} title="View document"><IcEye /></button>
                       <button className="dash-ic-btn accent" onClick={() => navigate(`${previewPath(r)}?download=true`)} title="Download PDF"><IcDownload /></button>
                       <button className="dash-ic-btn danger" onClick={() => setDeleteConfirm({ id: r.id, type: r._type })} title="Delete"><IcTrash /></button>
                     </div>

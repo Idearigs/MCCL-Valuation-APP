@@ -36,9 +36,11 @@ export default function PdfPreview({ documentId, title, editPath, fileName }: {
         const blob = await res.blob();
         if (cancelled) return;
         setResult(r); setPdfBytes(blob);
-        if (searchParams.get('download') === 'true' && !autoDownloadDone.current) {
+        // Dashboard shortcuts: ?download=true saves the file, ?print=true opens the print dialog.
+        if (!autoDownloadDone.current) {
           autoDownloadDone.current = true;
-          saveBlob(blob, fileName);
+          if (searchParams.get('download') === 'true') saveBlob(blob, fileName);
+          else if (searchParams.get('print') === 'true') printBlob(blob);
         }
       } catch (err) {
         if (!cancelled) setError((err as Error).message);
@@ -49,20 +51,7 @@ export default function PdfPreview({ documentId, title, editPath, fileName }: {
     return () => { cancelled = true; };
   }, [documentId, mode]);
 
-  const handlePrint = () => {
-    if (!pdfBytes) return;
-    // Print the actual PDF so paper output matches the preview exactly.
-    const url = URL.createObjectURL(pdfBytes);
-    const frame = document.createElement('iframe');
-    frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
-    frame.src = url;
-    frame.onload = () => {
-      try { frame.contentWindow?.focus(); frame.contentWindow?.print(); }
-      catch { window.open(url, '_blank'); } // e.g. iPad: open in a tab and print from there
-    };
-    document.body.appendChild(frame);
-    setTimeout(() => { frame.remove(); URL.revokeObjectURL(url); }, 60_000);
-  };
+  const handlePrint = () => { if (pdfBytes) printBlob(pdfBytes); };
 
   return (
     <div className="preview-shell">
@@ -108,6 +97,20 @@ export default function PdfPreview({ documentId, title, editPath, fileName }: {
       )}
     </div>
   );
+}
+
+/** Prints the actual PDF, so paper output matches the preview exactly. */
+function printBlob(blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  const frame = document.createElement('iframe');
+  frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  frame.src = url;
+  frame.onload = () => {
+    try { frame.contentWindow?.focus(); frame.contentWindow?.print(); }
+    catch { window.open(url, '_blank'); } // e.g. iPad: open in a tab and print from there
+  };
+  document.body.appendChild(frame);
+  setTimeout(() => { frame.remove(); URL.revokeObjectURL(url); }, 60_000);
 }
 
 function saveBlob(blob: Blob, name: string) {

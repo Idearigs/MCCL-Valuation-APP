@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { Router } from 'express';
 import multer from 'multer';
 import { and, eq, sql } from 'drizzle-orm';
@@ -9,7 +8,7 @@ import { documentImages, documents } from '../db/schema';
 import type { DocumentsRepo } from '../documents/repo';
 import { HttpError, notFound, parse, uuidParam } from '../http/errors';
 import type { Storage } from '../storage';
-import { processPhoto, processSignature } from './process';
+import { storePhoto, storeSignature } from './store';
 
 /** Max images per document. Well above the largest real document. */
 export const MAX_IMAGES_PER_DOCUMENT = 300;
@@ -44,27 +43,10 @@ export function imagesRouter({ db, repo, storage }: { db: Db; repo: DocumentsRep
       .from(documentImages).where(eq(documentImages.documentId, doc.id));
     if (n >= MAX_IMAGES_PER_DOCUMENT) throw new HttpError(400, `A document can have at most ${MAX_IMAGES_PER_DOCUMENT} images`);
 
-    const img = await processPhoto(req.file.buffer);
-    const imageId = randomUUID();
-    const printKey = `documents/${doc.id}/images/${imageId}-print.jpg`;
-    const thumbKey = `documents/${doc.id}/images/${imageId}-thumb.jpg`;
-    const gridKey = `documents/${doc.id}/images/${imageId}-grid.jpg`;
-    await Promise.all([
-      storage.put(printKey, img.print, 'image/jpeg'),
-      storage.put(thumbKey, img.thumb, 'image/jpeg'),
-      storage.put(gridKey, img.grid, 'image/jpeg'),
-    ]);
-
-    const [row] = await db.insert(documentImages).values({
-      id: imageId,
-      documentId: doc.id,
-      // Appends atomically even when uploads race.
-      position: sql`(select coalesce(max(${documentImages.position}), -1) + 1 from ${documentImages} where ${documentImages.documentId} = ${doc.id})`,
-      printKey, thumbKey, gridKey, width: img.width, height: img.height,
-    }).returning();
+    const row = await storePhoto(db, storage, doc.id, req.file.buffer);
     await touch(doc.id, req.user!.id);
     audit(db, req, { action: 'image.uploaded', entityType: 'document', entityId: doc.id });
-    res.status(201).json(await repo.toImage(row!));
+    res.status(201).json(await repo.toImage(row));
   });
 
   router.put('/images/order', async (req, res) => {
@@ -113,9 +95,7 @@ export function imagesRouter({ db, repo, storage }: { db: Db; repo: DocumentsRep
   router.put('/signature', upload.single('image'), async (req, res) => {
     const doc = await requireDoc(docParam(req.params));
     if (!req.file) throw new HttpError(400, 'No image uploaded (field "image")');
-    const png = await processSignature(req.file.buffer);
-    const key = `documents/${doc.id}/signature-${randomUUID()}.png`;
-    await storage.put(key, png, 'image/png');
+    const key = await storeSignature(storage, doc.id, req.file.buffer);
     await db.update(documents).set({ signatureKey: key, updatedAt: new Date(), updatedBy: req.user!.id })
       .where(eq(documents.id, doc.id));
     if (doc.signatureKey) await storage.delete([doc.signatureKey]);
