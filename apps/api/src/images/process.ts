@@ -1,15 +1,33 @@
-import sharp from 'sharp';
+import type SharpFactory from 'sharp';
+import type { Sharp } from 'sharp';
 import { HttpError } from '../http/errors';
+
+/**
+ * sharp is loaded on first use, not at startup: if its native library can't load on a
+ * server (and the WebAssembly fallback is missing too), the app still starts and only
+ * photo processing reports an error.
+ */
+let sharpModule: Promise<typeof SharpFactory> | undefined;
+function loadSharp(): Promise<typeof SharpFactory> {
+  sharpModule ??= import('sharp').then(m => {
+    const sharp = m.default;
+    // Keep sharp's memory bounded on small containers.
+    sharp.cache({ memory: 64, items: 20 });
+    sharp.concurrency(2);
+    return sharp;
+  }).catch(err => {
+    sharpModule = undefined;
+    console.error('Image processing (sharp) failed to load:', err);
+    throw new HttpError(503, 'Image processing is unavailable on this server');
+  });
+  return sharpModule;
+}
 
 /** Print variant: ~200 dpi at the largest size an image is shown on A4. */
 export const PRINT_MAX_PX = 1600;
 export const THUMB_MAX_PX = 400;
 /** Picture-grid cells print ~40mm square: 600px is ~380 dpi. */
 export const GRID_PX = 600;
-
-// Keep sharp's memory bounded on small containers.
-sharp.cache({ memory: 64, items: 20 });
-sharp.concurrency(2);
 
 export interface ProcessedImage {
   print: Buffer;
@@ -25,7 +43,8 @@ export interface ProcessedImage {
  * the app needs.
  */
 export async function processPhoto(input: Buffer): Promise<ProcessedImage> {
-  let base: ReturnType<typeof sharp>;
+  const sharp = await loadSharp();
+  let base: Sharp;
   try {
     base = sharp(input, { limitInputPixels: 80_000_000, failOn: 'error' }).rotate();
     await base.metadata();
@@ -56,6 +75,7 @@ export async function processPhoto(input: Buffer): Promise<ProcessedImage> {
 
 /** Signatures keep transparency and are trimmed to their ink. */
 export async function processSignature(input: Buffer): Promise<Buffer> {
+  const sharp = await loadSharp();
   try {
     return await sharp(input, { limitInputPixels: 40_000_000, failOn: 'error' })
       .rotate()

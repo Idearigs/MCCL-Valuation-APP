@@ -20,8 +20,9 @@ FROM node:22-bookworm-slim
 WORKDIR /app/apps/api
 
 # Chromium renders the PDFs; the fonts cover £, accents and symbols in schedules.
+# curl is used by Coolify's health check.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends chromium fonts-dejavu-core fonts-liberation fonts-noto-core \
+ && apt-get install -y --no-install-recommends chromium fonts-dejavu-core fonts-liberation fonts-noto-core curl \
  && rm -rf /var/lib/apt/lists/*
 
 # Production dependencies of the API only
@@ -30,6 +31,16 @@ COPY --from=build /src/apps/api/package.json /app/apps/api/
 COPY --from=build /src/apps/web/package.json /app/apps/web/
 COPY --from=build /src/packages/shared/package.json /app/packages/shared/
 RUN cd /app && npm ci --omit=dev --workspace @mccl/api --no-audit --no-fund && npm cache clean --force
+
+# sharp's native Linux binary needs an x86-64-v2 CPU, which some virtual servers don't
+# expose. sharp falls back to its WebAssembly build automatically when the native one
+# can't load, but npm won't install that build on x64, so add it by hand.
+RUN cd /app \
+ && SHARP_VERSION=$(node -p "require('./node_modules/sharp/package.json').version") \
+ && npm pack --silent "@img/sharp-wasm32@${SHARP_VERSION}" \
+ && mkdir -p node_modules/@img/sharp-wasm32 \
+ && tar -xzf img-sharp-wasm32-*.tgz -C node_modules/@img/sharp-wasm32 --strip-components=1 \
+ && rm img-sharp-wasm32-*.tgz && npm cache clean --force
 
 COPY --from=build /src/apps/api/dist ./dist
 COPY --from=build /src/apps/api/drizzle ./drizzle
