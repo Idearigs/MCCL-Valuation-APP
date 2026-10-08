@@ -76,10 +76,11 @@ h1, h2, h3, h4, .doc-section-title, .pricing-header, .probate-section-label { br
 .pricing-insurance-value { font-size: 12pt; font-style: italic; margin-bottom: 8mm; }
 .pricing-footnote { font-size: 10pt; font-style: italic; }
 
-/* Picture schedule: 4 columns, square crops, numbered. Flows onto as many pages as needed. */
-.photos { display: flex; flex-wrap: wrap; gap: 3mm; }
+/* Picture schedule: 3 columns of 50mm square photos (9 per page), numbered, centred.
+   Flows onto as many pages as needed. */
+.photos { display: flex; flex-wrap: wrap; gap: 4mm; width: 158mm; margin: 0 auto; }
 .photo {
-  position: relative; width: calc((100% - 9mm) / 4); aspect-ratio: 1;
+  position: relative; width: 50mm; height: 50mm;
   break-inside: avoid;
 }
 .photo img { width: 100%; height: 100%; object-fit: cover; border: 1px solid #ddd; border-radius: 1mm; display: block; }

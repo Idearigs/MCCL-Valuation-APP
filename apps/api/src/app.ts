@@ -19,7 +19,7 @@ import { documentsRouter } from './documents/routes';
 import { imagesRouter } from './images/routes';
 import type { PdfRenderer } from './pdf/renderer';
 import { createPdfService } from './pdf/service';
-import { pdfRouter } from './pdf/routes';
+import { pdfRouter, pdfToolsRouter } from './pdf/routes';
 import { errorHandler, notFoundHandler } from './http/errors';
 
 export interface AppDeps {
@@ -93,6 +93,7 @@ export function createApp({ env, db, storage, logger, renderer }: AppDeps) {
   app.use('/api/documents', requireAuth, documentsRouter({ db, repo }));
   app.use('/api/documents/:id', requireAuth, imagesRouter({ db, repo, storage }));
   app.use('/api/documents/:id', requireAuth, pdfRouter({ db, pdf }));
+  app.use('/api/pdf', requireAuth, pdfToolsRouter({ pdf }));
   app.use('/api', notFoundHandler);
 
   // ── Web app (production) ──

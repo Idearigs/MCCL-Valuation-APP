@@ -44,9 +44,14 @@ const envSchema = z.object({
   GOTENBERG_URL: z.url().optional(),
   /** Chrome/Chromium binary for PDF_RENDERER=chrome. Defaults to the installed Google Chrome. */
   CHROME_PATH: z.string().optional(),
-  /** Blank space kept for pre-printed letterhead paper (stationery mode). */
-  STATIONERY_TOP_MM: z.coerce.number().min(0).max(150).default(65),
-  STATIONERY_BOTTOM_MM: z.coerce.number().min(0).max(150).default(35),
+  /**
+   * Blank space kept for pre-printed letterhead paper (stationery mode). Defaults match the
+   * letterhead PDF exactly, so text lands where the preview shows it. The artwork ends 59mm
+   * from the top and starts 54mm from the bottom (measured from letterhead.png); adjust only
+   * if the alignment test page shows the shop printer is offset.
+   */
+  STATIONERY_TOP_MM: z.coerce.number().min(0).max(150).default(73),
+  STATIONERY_BOTTOM_MM: z.coerce.number().min(0).max(150).default(60),
 
   SENTRY_DSN: z.string().optional(),
 }).superRefine((env, ctx) => {

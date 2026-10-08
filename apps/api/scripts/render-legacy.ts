@@ -106,7 +106,7 @@ for (const [type, row] of all.filter(([, r]) => !values.only || String(r.id).sta
   };
   const build = (sectionPages: Record<string, number>, markers: boolean) => ({
     ...buildRenderInput(doc, staticAssets, {
-      mode, stationeryMargins: { top: 65, bottom: 35 }, images, signatureSrc, sectionPages, markers,
+      mode, stationeryMargins: { top: 73, bottom: 60 }, images, signatureSrc, sectionPages, markers,
     }),
     assets,
   });

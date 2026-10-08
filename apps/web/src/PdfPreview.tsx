@@ -67,6 +67,12 @@ export default function PdfPreview({ documentId, title, editPath, fileName }: {
             <option value="letterhead">With letterhead</option>
             <option value="stationery">For pre-printed paper</option>
           </select>
+          {mode === 'stationery' && (
+            <a className="btn btn-ghost" href="/api/pdf/alignment-test" target="_blank" rel="noopener"
+              title="One page with rulers: print it on pre-printed paper to check the printer's alignment">
+              📏 Alignment test
+            </a>
+          )}
           <button className="btn btn-ghost" onClick={handlePrint} disabled={!pdfBytes}>🖨️ Print</button>
           <button className="btn btn-primary" onClick={() => pdfBytes && saveBlob(pdfBytes, fileName)} disabled={!pdfBytes}>
             ⬇ Download PDF
@@ -92,6 +98,11 @@ export default function PdfPreview({ documentId, title, editPath, fileName }: {
             {result.pageCount} pages · {(result.byteSize / 1e6).toFixed(1)} MB
             {result.cached ? ' · unchanged since last generated' : ` · generated in ${(result.renderMs / 1000).toFixed(1)}s`}
           </div>
+          {mode === 'stationery' && (
+            <div className="pdf-meta pdf-print-tip no-print">
+              Printing on pre-printed letterhead: in the print dialog choose <b>Scale: Actual size (100%)</b>, not “Fit to page”.
+            </div>
+          )}
           <PdfPages blob={pdfBytes} />
         </>
       )}

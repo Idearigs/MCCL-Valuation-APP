@@ -159,3 +159,28 @@ async function analysePdfWithMarkers(texts: string[]) {
   };
 }
 
+
+describe('printing on pre-printed letterhead paper', () => {
+  it('marks every PDF to print at actual size (no fit-to-page shrinking)', async () => {
+    const { body: doc } = await agent.post('/api/documents').send(sampleValuation());
+    const res = await agent.post(`/api/documents/${doc.id}/pdf`).send({ mode: 'stationery' });
+    const { PDFDocument, PDFDict, PDFName } = await import('pdf-lib');
+    const pdf = await PDFDocument.load(await download(res.body.url));
+    const prefs = pdf.catalog.lookup(PDFName.of('ViewerPreferences'), PDFDict);
+    expect(prefs.get(PDFName.of('PrintScaling'))).toEqual(PDFName.of('None'));
+  }, 120_000);
+
+  it('serves a one-page alignment test with rulers and the text boundaries', async () => {
+    const res = await agent.get('/api/pdf/alignment-test').buffer(true).parse((r, cb) => {
+      const chunks: Buffer[] = [];
+      r.on('data', (c: Buffer) => chunks.push(c));
+      r.on('end', () => cb(null, Buffer.concat(chunks)));
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toBe('application/pdf');
+    const texts = await pageTexts(res.body as Buffer);
+    expect(texts).toHaveLength(1);
+    expect(texts[0]).toContain('document text starts here (73 mm from the top)');
+    expect(texts[0]).toContain('document text ends here (60 mm from the bottom)');
+  }, 120_000);
+});

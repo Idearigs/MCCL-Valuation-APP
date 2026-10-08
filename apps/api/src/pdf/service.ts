@@ -7,6 +7,8 @@ import type { DocumentsRepo } from '../documents/repo';
 import type { Logger } from '../logger';
 import type { Storage } from '../storage';
 import { analysePdf } from './analyse';
+import { alignmentTestPage } from './alignment';
+import { finalizePdf } from './finalize';
 import { loadStaticAssets } from './assets';
 import { buildRenderInput, marginsFor, TEMPLATE_VERSION, type Margins } from './html';
 import type { PdfRenderer, RenderAsset } from './renderer';
@@ -101,6 +103,7 @@ export function createPdfService({ db, repo, storage, renderer, logger, statione
         let pdf = await renderer.render(build({}, needsContents));
         const first = await analysePdf(pdf);
         if (needsContents) pdf = await renderer.render(build(first.sectionPages, false));
+        pdf = await finalizePdf(pdf, doc.displayName || (doc.type === 'valuation' ? 'Valuation' : 'Probate valuation'));
         const renderMs = Date.now() - started;
 
         const storageKey = `documents/${documentId}/pdf/${mode}-${contentHash.slice(0, 16)}.pdf`;
@@ -121,7 +124,13 @@ export function createPdfService({ db, repo, storage, renderer, logger, statione
     return job;
   }
 
-  return { generate, get queued() { return queue.pending; } };
+  /** One-page ruler sheet for checking alignment on pre-printed paper. */
+  function alignmentTest(): Promise<Buffer> {
+    return queue.run(async () =>
+      finalizePdf(await renderer.render({ ...alignmentTestPage(stationeryMargins), assets: {} }), 'Alignment test'));
+  }
+
+  return { generate, alignmentTest, get queued() { return queue.pending; } };
 }
 
 export type PdfService = ReturnType<typeof createPdfService>;

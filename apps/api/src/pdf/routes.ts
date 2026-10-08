@@ -23,3 +23,19 @@ export function pdfRouter({ db, pdf }: { db: Db; pdf: PdfService }) {
 
   return router;
 }
+
+/** Mounted at /api/pdf */
+export function pdfToolsRouter({ pdf }: { pdf: PdfService }) {
+  const router = Router();
+
+  // Opened directly in a new tab, so it returns the PDF itself.
+  router.get('/alignment-test', async (_req, res) => {
+    const file = await pdf.alignmentTest();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="alignment-test.pdf"');
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(file);
+  });
+
+  return router;
+}

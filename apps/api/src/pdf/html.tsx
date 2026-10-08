@@ -8,9 +8,13 @@ import { ProbateDocument } from './template/probate';
 import type { TemplateImage } from './template/common';
 
 /** Bump when the template changes so cached PDFs are regenerated. */
-export const TEMPLATE_VERSION = 1;
+export const TEMPLATE_VERSION = 2;
 
-/** Letterhead strip heights: the images are 1786px wide, drawn at the full 210mm page width. */
+/**
+ * Letterhead strip heights: the images are 1786px wide, drawn at the full 210mm page width.
+ * The artwork itself ends 59mm from the top and starts 54mm from the bottom, so content
+ * keeps a clear gap from it in both letterhead and pre-printed paper modes.
+ */
 export const LETTERHEAD_MARGINS = { top: 73, bottom: 60 };
 
 export interface Margins { top: number; bottom: number }
