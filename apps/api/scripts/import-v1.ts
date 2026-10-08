@@ -15,7 +15,7 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import pg from 'pg';
 import {
   probateDetailsSchema, summarise, valuationDetailsSchema, type DocumentInput,
@@ -118,17 +118,34 @@ const all = [
   ...valuations.map(r => ['valuation', r] as const),
   ...probates.map(r => ['probate', r] as const),
 ];
-const existing = new Set((await db.select({ legacyId: documents.legacyId }).from(documents)
-  .where(inArray(documents.legacyId, all.map(([, r]) => String(r.id))))).map(r => r.legacyId));
+// Documents imported by an earlier run. updatedBy is only set by edits made in v2.
+const existingRows = all.length === 0 ? [] : await db.select({
+  legacyId: documents.legacyId,
+  updatedBy: documents.updatedBy,
+  signatureKey: documents.signatureKey,
+  photos: sql<number>`(select count(*) from ${documentImages} where ${documentImages.documentId} = ${documents.id})`.mapWith(Number),
+}).from(documents).where(inArray(documents.legacyId, all.map(([, r]) => String(r.id))));
+const existing = new Map(existingRows.map(r => [r.legacyId!, {
+  photos: r.photos, hasSignature: !!r.signatureKey, editedInV2: !!r.updatedBy,
+}]));
 
-const report = { imported: 0, skipped: 0, failed: 0, photos: 0, photosMissing: 0, signatures: 0 };
+const report = { imported: 0, repaired: 0, skipped: 0, failed: 0, photos: 0, photosMissing: 0, signatures: 0 };
 console.log(`Found ${valuations.length} valuations and ${probates.length} probates in v1.${values['dry-run'] ? ' (dry run)' : ''}`);
 
 for (const [type, row] of all) {
   const id8 = String(row.id).slice(0, 8);
+  let insertedId: string | null = null;
   try {
-    if (existing.has(String(row.id))) {
-      if (!values.replace) { report.skipped++; continue; }
+    const prior = existing.get(String(row.id));
+    if (prior) {
+      // Re-import when asked, or when an earlier run left it incomplete (missing photos
+      // or signature) and nobody has edited it in v2 since. Edited documents are kept.
+      const expectedPhotos = (Array.isArray(row.images) ? row.images : []).length;
+      const expectsSignature = typeof row.owner_signature === 'string' && row.owner_signature.startsWith('data:');
+      const incomplete = prior.photos < expectedPhotos || (expectsSignature && !prior.hasSignature);
+      const repair = !prior.editedInV2 && incomplete;
+      if (!values.replace && !repair) { report.skipped++; continue; }
+      if (repair && !values.replace) report.repaired++;
       if (!values['dry-run']) await removeImported(String(row.id));
     }
     const input = toInput(type, row);
@@ -149,6 +166,7 @@ for (const [type, row] of all) {
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at ?? row.created_at),
     }).returning();
+    insertedId = doc!.id;
 
     let missing = 0;
     for (const img of rawImages) {
@@ -172,6 +190,8 @@ for (const [type, row] of all) {
   } catch (err) {
     report.failed++;
     console.error(`  FAILED ${type} ${id8}: ${(err as Error).message}`);
+    // Don't leave a half-imported document behind: the next run retries it cleanly.
+    if (insertedId) await removeImported(String(row.id)).catch(() => undefined);
   }
 }
 
