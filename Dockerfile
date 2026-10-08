@@ -7,7 +7,9 @@ COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 COPY packages/shared/package.json packages/shared/
-RUN npm ci --no-audit --no-fund
+# --include=dev: Coolify passes the app's settings as build args, including
+# NODE_ENV=production, which would otherwise skip the build tools (tsc, vite).
+RUN npm ci --include=dev --no-audit --no-fund
 
 COPY . .
 RUN npm run build -w @mccl/web && npm run build -w @mccl/api
