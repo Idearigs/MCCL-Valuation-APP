@@ -4,6 +4,7 @@ import type { PdfMode, PdfResult } from '@mccl/shared';
 import * as pdfjs from 'pdfjs-dist';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { api } from './api';
+import { IcBack, IcDownload, IcEdit, IcPrint, IcRuler } from './icons';
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 
@@ -23,6 +24,7 @@ export default function PdfPreview({ documentId, title, editPath, fileName }: {
   const [pdfBytes, setPdfBytes] = useState<Blob | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(true);
+  const [attempt, setAttempt] = useState(0);
   const autoDownloadDone = useRef(false);
 
   useEffect(() => {
@@ -49,36 +51,58 @@ export default function PdfPreview({ documentId, title, editPath, fileName }: {
       }
     })();
     return () => { cancelled = true; };
-  }, [documentId, mode]);
+  }, [documentId, mode, attempt]);
 
   const handlePrint = () => { if (pdfBytes) printBlob(pdfBytes); };
+  const meta = busy ? 'Generating…'
+    : result ? `${result.pageCount} pages · ${(result.byteSize / 1e6).toFixed(1)} MB` : '';
 
   return (
     <div className="preview-shell">
-      <div className="preview-toolbar no-print">
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button className="btn btn-ghost" onClick={() => navigate('/')}>← Dashboard</button>
-          <button className="btn btn-ghost" onClick={() => navigate(editPath)}>✏️ Edit</button>
+      <header className="tb-bar no-print">
+        <div className="tb-inner">
+          <div className="tb-heading-row">
+            <button className="tb-icon-btn" onClick={() => navigate('/')} aria-label="Back to dashboard" title="Dashboard">
+              <IcBack />
+            </button>
+            <div className="tb-heading">
+              <div className="tb-title">{title}</div>
+              <div className="tb-sub">{meta}</div>
+            </div>
+            <button className="tb-btn tb-btn-quiet" onClick={() => navigate(editPath)} title="Edit document">
+              <IcEdit /><span className="tb-label">Edit</span>
+            </button>
+          </div>
+
+          <div className="tb-actions-row">
+            <div className="tb-seg" role="radiogroup" aria-label="Paper">
+              <button role="radio" aria-checked={mode === 'letterhead'} className={mode === 'letterhead' ? 'on' : ''}
+                onClick={() => setMode('letterhead')} title="PDF with the letterhead, for email or plain paper">
+                Letterhead
+              </button>
+              <button role="radio" aria-checked={mode === 'stationery'} className={mode === 'stationery' ? 'on' : ''}
+                onClick={() => setMode('stationery')} title="Leaves the letterhead area blank, for pre-printed paper">
+                Pre-printed
+              </button>
+            </div>
+            <div className="tb-buttons">
+              {mode === 'stationery' && (
+                <a className="tb-btn" href="/api/pdf/alignment-test" target="_blank" rel="noopener"
+                  title="One page with rulers: print it on pre-printed paper to check alignment">
+                  <IcRuler /><span className="tb-label">Alignment</span>
+                </a>
+              )}
+              <button className="tb-btn" onClick={handlePrint} disabled={!pdfBytes} title="Print">
+                <IcPrint /><span className="tb-label">Print</span>
+              </button>
+              <button className="tb-btn tb-btn-primary" onClick={() => pdfBytes && saveBlob(pdfBytes, fileName)}
+                disabled={!pdfBytes} title="Download PDF">
+                <IcDownload /><span>PDF</span>
+              </button>
+            </div>
+          </div>
         </div>
-        <span className="preview-title">{title}</span>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <select className="preview-mode" value={mode} onChange={e => setMode(e.target.value as PdfMode)}
-            title="Letterhead: for email/PDF. Plain paper: for printing on pre-printed letterhead.">
-            <option value="letterhead">With letterhead</option>
-            <option value="stationery">For pre-printed paper</option>
-          </select>
-          {mode === 'stationery' && (
-            <a className="btn btn-ghost" href="/api/pdf/alignment-test" target="_blank" rel="noopener"
-              title="One page with rulers: print it on pre-printed paper to check the printer's alignment">
-              📏 Alignment test
-            </a>
-          )}
-          <button className="btn btn-ghost" onClick={handlePrint} disabled={!pdfBytes}>🖨️ Print</button>
-          <button className="btn btn-primary" onClick={() => pdfBytes && saveBlob(pdfBytes, fileName)} disabled={!pdfBytes}>
-            ⬇ Download PDF
-          </button>
-        </div>
-      </div>
+      </header>
 
       {busy && (
         <div className="pdf-status">
@@ -89,15 +113,11 @@ export default function PdfPreview({ documentId, title, editPath, fileName }: {
       {error && (
         <div className="pdf-status pdf-status-error">
           <div>⚠️ {error}</div>
-          <button className="btn btn-primary btn-sm" onClick={() => setMode(m => m)}>Try again</button>
+          <button className="btn btn-primary btn-sm" onClick={() => setAttempt(a => a + 1)}>Try again</button>
         </div>
       )}
       {result && pdfBytes && (
         <>
-          <div className="pdf-meta no-print">
-            {result.pageCount} pages · {(result.byteSize / 1e6).toFixed(1)} MB
-            {result.cached ? ' · unchanged since last generated' : ` · generated in ${(result.renderMs / 1000).toFixed(1)}s`}
-          </div>
           {mode === 'stationery' && (
             <div className="pdf-meta pdf-print-tip no-print">
               Printing on pre-printed letterhead: in the print dialog choose <b>Scale: Actual size (100%)</b>, not “Fit to page”.

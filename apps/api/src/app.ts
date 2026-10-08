@@ -50,7 +50,8 @@ export function createApp({ env, db, storage, logger, renderer }: AppDeps) {
     contentSecurityPolicy: {
       directives: {
         'img-src': ["'self'", 'data:', 'blob:', ...storage.origins],
-        'connect-src': ["'self'", ...storage.origins, 'https://*.ingest.sentry.io', 'https://*.ingest.us.sentry.io'],
+        // errors.buymediamonds.co.uk: the shared error hub the web app reports crashes to.
+        'connect-src': ["'self'", ...storage.origins, 'https://*.ingest.sentry.io', 'https://*.ingest.us.sentry.io', 'https://errors.buymediamonds.co.uk'],
         'worker-src': ["'self'", 'blob:'],
       },
     },
