@@ -8,7 +8,7 @@ import { ProbateDocument } from './template/probate';
 import type { TemplateImage } from './template/common';
 
 /** Bump when the template changes so cached PDFs are regenerated. */
-export const TEMPLATE_VERSION = 3;
+export const TEMPLATE_VERSION = 4;
 
 /**
  * Letterhead strip heights: the images are 1786px wide, drawn at the full 210mm page width.

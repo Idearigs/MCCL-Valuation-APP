@@ -190,7 +190,8 @@ export function ValuationDocument(p: ValuationTemplateProps) {
         </div>
         <hr className="insurer-rule" />
         <p className="insurer-contact">
-          If you have any questions, please contact McCulloch the Jewellers on 0115 925 7552
+          Should you require any further information or assistance regarding this valuation, please do not
+          hesitate to contact McCulloch the Jewellers on 0115&nbsp;925&nbsp;7552.
         </p>
         <div className="insurer-sig-block">
           <div className="insurer-sig">
