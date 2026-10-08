@@ -184,3 +184,20 @@ describe('printing on pre-printed letterhead paper', () => {
     expect(texts[0]).toContain('document text ends here (60 mm from the bottom)');
   }, 120_000);
 });
+
+describe('insurer notice', () => {
+  it('keeps the signature on the same page as the notice, even with a long address', async () => {
+    const address = Array.from({ length: 7 }, (_, i) => `Address line ${i + 1}`).join('\n');
+    const { body: doc } = await agent.post('/api/documents').send(sampleValuation({
+      details: { ...sampleValuation().details, customerName: 'Mrs Elizabeth Alexandra Montgomery-Smythe', customerAddress: address },
+    }));
+    for (const mode of ['letterhead', 'stationery']) {
+      const res = await agent.post(`/api/documents/${doc.id}/pdf`).send({ mode });
+      const texts = await pageTexts(await download(res.body.url));
+      const noticePage = texts.findIndex(t => t.includes('Insurer Notice'));
+      const signaturePage = texts.findIndex(t => t.includes('Andrew McCulloch Jewellers'));
+      expect(signaturePage, mode).toBe(noticePage);
+      expect(signaturePage, mode).toBe(texts.length - 1);
+    }
+  }, 180_000);
+});

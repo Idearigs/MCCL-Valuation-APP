@@ -97,14 +97,17 @@ h1, h2, h3, h4, .doc-section-title, .pricing-header, .probate-section-label { br
 .clarity-diagram { width: 100%; display: block; margin: 7pt 0; }
 
 /* Insurer notice */
-.insurer-header-text { text-align: center; font-size: 10.5pt; font-weight: 700; line-height: 2; margin-bottom: 6mm; }
-.insurer-rule { border: none; border-top: 1px solid #777; margin: 8mm 0; }
-.insurer-row { text-align: center; font-size: 11pt; font-style: italic; line-height: 1.8; }
-.insurer-contact { text-align: center; font-size: 10pt; font-style: italic; color: #555; margin-top: 8mm; }
-.insurer-sig-block { display: flex; justify-content: flex-end; margin-top: 10mm; break-inside: avoid; }
+/* Insurer notice: compact enough that the whole notice, signature included, fits on one
+   page even with a long (7-line) address. */
+.insurer { break-inside: avoid; }
+.insurer-header-text { text-align: center; font-size: 10.5pt; font-weight: 700; line-height: 1.6; margin-bottom: 4mm; }
+.insurer-rule { border: none; border-top: 1px solid #777; margin: 4.5mm 0; }
+.insurer-row { text-align: center; font-size: 11pt; font-style: italic; line-height: 1.5; }
+.insurer-contact { text-align: center; font-size: 10pt; font-style: italic; color: #555; margin-top: 4mm; }
+.insurer-sig-block { display: flex; justify-content: flex-end; margin-top: 5mm; break-inside: avoid; }
 .insurer-sig { text-align: center; }
 .insurer-sig img { max-width: 35mm; max-height: 18mm; display: block; margin: 0 auto 1mm; }
-.insurer-sig-blank { width: 35mm; height: 16mm; border-bottom: 1px solid #555; margin: 0 auto 1mm; }
+.insurer-sig-blank { width: 35mm; height: 14mm; border-bottom: 1px solid #555; margin: 0 auto 1mm; }
 .insurer-sig-name { font-size: 10pt; font-style: italic; font-weight: 700; }
 .insurer-sig-place { font-size: 10pt; font-style: italic; }
 

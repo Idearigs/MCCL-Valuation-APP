@@ -19,7 +19,9 @@ export default function PdfPreview({ documentId, title, editPath, fileName }: {
 }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [mode, setMode] = useState<PdfMode>('letterhead');
+  // Opened via the dashboard's Print button: show what will actually print.
+  const [mode, setMode] = useState<PdfMode>(searchParams.get('print') === 'true' ? 'stationery' : 'letterhead');
+  const [printing, setPrinting] = useState(false);
   const [result, setResult] = useState<PdfResult | null>(null);
   const [pdfBytes, setPdfBytes] = useState<Blob | null>(null);
   const [error, setError] = useState('');
@@ -53,7 +55,23 @@ export default function PdfPreview({ documentId, title, editPath, fileName }: {
     return () => { cancelled = true; };
   }, [documentId, mode, attempt]);
 
-  const handlePrint = () => { if (pdfBytes) printBlob(pdfBytes); };
+  // The shop prints on pre-printed letterhead paper, so Print always uses the version
+  // without the letterhead. Printing the letterhead version on that paper printed the
+  // logo and address twice. "Letterhead" view is for screen, download and email.
+  const handlePrint = async () => {
+    if (mode === 'stationery' && pdfBytes) { printBlob(pdfBytes); return; }
+    setPrinting(true);
+    try {
+      const r = await api.generatePdf(documentId, 'stationery');
+      const res = await fetch(r.url);
+      if (!res.ok) throw new Error('Could not download the document for printing');
+      printBlob(await res.blob());
+    } catch (err) {
+      alert((err as Error).message);
+    } finally {
+      setPrinting(false);
+    }
+  };
   const meta = busy ? 'Generating…'
     : result ? `${result.pageCount} pages · ${(result.byteSize / 1e6).toFixed(1)} MB` : '';
 
@@ -92,8 +110,9 @@ export default function PdfPreview({ documentId, title, editPath, fileName }: {
                   <IcRuler /><span className="tb-label">Alignment</span>
                 </a>
               )}
-              <button className="tb-btn" onClick={handlePrint} disabled={!pdfBytes} title="Print">
-                <IcPrint /><span className="tb-label">Print</span>
+              <button className="tb-btn" onClick={handlePrint} disabled={!pdfBytes || printing}
+                title="Print on pre-printed letterhead paper (the letterhead itself is not printed)">
+                <IcPrint /><span className="tb-label">{printing ? 'Preparing…' : 'Print'}</span>
               </button>
               <button className="tb-btn tb-btn-primary" onClick={() => pdfBytes && saveBlob(pdfBytes, fileName)}
                 disabled={!pdfBytes} title="Download PDF">
