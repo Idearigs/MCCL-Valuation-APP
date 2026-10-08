@@ -43,7 +43,7 @@ export async function setupTestApp(overrides: Partial<Record<keyof Env, string>>
 }
 
 export async function resetDb(db: Db) {
-  await db.execute(sql`truncate audit_log, generated_pdfs, document_images, documents, sessions, pin_throttle, users restart identity cascade`);
+  await db.execute(sql`truncate v2.audit_log, v2.generated_pdfs, v2.document_images, v2.documents, v2.sessions, v2.pin_throttle, v2.users restart identity cascade`);
 }
 
 type App = Awaited<ReturnType<typeof setupTestApp>>['app'];

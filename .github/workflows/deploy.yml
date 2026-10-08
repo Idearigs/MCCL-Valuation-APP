@@ -13,12 +13,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
-      - name: Install and build
+      - name: Install, typecheck and build
         run: |
           npm ci
+          npm run typecheck -w @mccl/shared
+          npm run typecheck -w @mccl/api
+          npm run typecheck -w @mccl/web
           npm run build
 
   deploy:

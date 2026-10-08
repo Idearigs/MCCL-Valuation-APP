@@ -38,7 +38,11 @@ export class ChromeRenderer implements PdfRenderer {
     this.browser ??= (async () => {
       const { chromium } = await import('playwright-core');
       const executablePath = this.executablePath ?? defaultChromePath();
-      const browser = await chromium.launch({ executablePath, headless: true });
+      // In the Linux container: Docker's /dev/shm is tiny, and Chrome's sandbox needs kernel
+      // features containers usually lack. The page only ever loads our own generated HTML and
+      // every network request is blocked (see render()), so running unsandboxed is acceptable.
+      const args = process.platform === 'linux' ? ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'] : [];
+      const browser = await chromium.launch({ executablePath, headless: true, args });
       browser.on('disconnected', () => { this.browser = undefined; });
       return browser;
     })().catch(err => {

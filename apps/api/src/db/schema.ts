@@ -1,14 +1,21 @@
 import { sql } from 'drizzle-orm';
 import {
-  bigserial, boolean, date, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid, varchar,
+  bigserial, boolean, date, index, integer, jsonb, pgSchema, text, timestamp, uniqueIndex, uuid, varchar,
 } from 'drizzle-orm/pg-core';
+
+/**
+ * All v2 tables live in their own Postgres schema, so v2 can share the live database
+ * with the current app without touching its tables (public.users, public.valuations,
+ * public.probate_valuations). The importer reads those; v2 never writes to them.
+ */
+export const v2 = pgSchema('v2');
 
 const timestamps = {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 };
 
-export const users = pgTable('users', {
+export const users = v2.table('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 255 }).notNull().unique(),
   name: varchar('name', { length: 255 }).notNull().default(''),
@@ -23,14 +30,14 @@ export const users = pgTable('users', {
  * Wrong-PIN counters: one row per client IP plus a 'global' row that caps guesses from
  * everywhere combined. Counters decay after a quiet period.
  */
-export const pinThrottle = pgTable('pin_throttle', {
+export const pinThrottle = v2.table('pin_throttle', {
   key: varchar('key', { length: 80 }).primaryKey(),
   failures: integer('failures').notNull().default(0),
   blockedUntil: timestamp('blocked_until', { withTimezone: true }),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const sessions = pgTable('sessions', {
+export const sessions = v2.table('sessions', {
   id: uuid('id').primaryKey().defaultRandom(),
   tokenHash: text('token_hash').notNull().unique(),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -41,7 +48,7 @@ export const sessions = pgTable('sessions', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, t => [index('sessions_expires_idx').on(t.expiresAt)]);
 
-export const documents = pgTable('documents', {
+export const documents = v2.table('documents', {
   id: uuid('id').primaryKey().defaultRandom(),
   type: varchar('type', { length: 20 }).$type<'valuation' | 'probate'>().notNull(),
   status: varchar('status', { length: 20 }).$type<'draft' | 'complete'>().notNull().default('draft'),
@@ -67,7 +74,7 @@ export const documents = pgTable('documents', {
   index('documents_date_idx').on(t.documentDate),
 ]);
 
-export const documentImages = pgTable('document_images', {
+export const documentImages = v2.table('document_images', {
   id: uuid('id').primaryKey().defaultRandom(),
   documentId: uuid('document_id').notNull().references(() => documents.id, { onDelete: 'cascade' }),
   position: integer('position').notNull(),
@@ -82,7 +89,7 @@ export const documentImages = pgTable('document_images', {
 }, t => [index('document_images_doc_idx').on(t.documentId, t.position)]);
 
 /** Rendered PDFs, keyed by a hash of everything that affects the output. */
-export const generatedPdfs = pgTable('generated_pdfs', {
+export const generatedPdfs = v2.table('generated_pdfs', {
   id: uuid('id').primaryKey().defaultRandom(),
   documentId: uuid('document_id').notNull().references(() => documents.id, { onDelete: 'cascade' }),
   mode: varchar('mode', { length: 20 }).$type<'letterhead' | 'stationery'>().notNull(),
@@ -94,7 +101,7 @@ export const generatedPdfs = pgTable('generated_pdfs', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, t => [uniqueIndex('generated_pdfs_doc_hash_idx').on(t.documentId, t.mode, t.contentHash)]);
 
-export const auditLog = pgTable('audit_log', {
+export const auditLog = v2.table('audit_log', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
   userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
   action: varchar('action', { length: 64 }).notNull(),

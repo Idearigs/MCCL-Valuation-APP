@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto';
 import { z } from 'zod';
 
 const bool = z.enum(['true', 'false']).default('false').transform(v => v === 'true');
@@ -66,8 +67,35 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>;
 
+/**
+ * Lets v2 run on the live app's existing Coolify settings, with no new variables:
+ *  - DATABASE_URL, or built from the v1 PG_HOST / PG_PORT / PG_DATABASE / PG_USERNAME / PG_PASSWORD
+ *  - PIN_PEPPER and FILE_URL_SECRET derived from APP_SECRET, or v1's JWT_SECRET
+ *  - ADMIN_PIN taken from v1's ADMIN_PASSWORD, which in v1 *is* the shop PIN
+ * Explicitly set variables always win.
+ */
+export function withLegacyFallbacks(source: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const env = { ...source };
+  if (!env.DATABASE_URL && env.PG_HOST) {
+    const user = encodeURIComponent(env.PG_USERNAME ?? '');
+    const pass = encodeURIComponent(env.PG_PASSWORD ?? '');
+    env.DATABASE_URL = `postgres://${user}:${pass}@${env.PG_HOST}:${env.PG_PORT || 5432}/${env.PG_DATABASE ?? ''}`;
+  }
+  const master = env.APP_SECRET || env.JWT_SECRET;
+  if (master && master.length >= 16) {
+    const derive = (purpose: string) => createHmac('sha256', master).update(`mccl-v2:${purpose}`).digest('base64url');
+    env.PIN_PEPPER ||= derive('pin-pepper');
+    env.FILE_URL_SECRET ||= derive('file-urls');
+  }
+  const pinLength = Number(env.PIN_LENGTH || 4);
+  if (!env.ADMIN_PIN && env.ADMIN_PASSWORD && new RegExp(`^\\d{${pinLength}}$`).test(env.ADMIN_PASSWORD)) {
+    env.ADMIN_PIN = env.ADMIN_PASSWORD;
+  }
+  return env;
+}
+
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
-  const parsed = envSchema.safeParse(source);
+  const parsed = envSchema.safeParse(withLegacyFallbacks(source));
   if (!parsed.success) {
     const issues = parsed.error.issues.map(i => `  ${i.path.join('.')}: ${i.message}`).join('\n');
     throw new Error(`Invalid environment configuration:\n${issues}`);

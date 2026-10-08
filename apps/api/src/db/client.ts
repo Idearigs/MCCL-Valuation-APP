@@ -30,5 +30,6 @@ export async function runMigrations(db: Db) {
   const { existsSync } = await import('node:fs');
   const migrationsFolder = candidates.find(p => existsSync(path.join(p, 'meta', '_journal.json')));
   if (!migrationsFolder) throw new Error(`Migrations folder not found (looked in ${candidates.join(', ')})`);
-  await migrate(db, { migrationsFolder });
+  // Migration bookkeeping also stays inside the v2 schema.
+  await migrate(db, { migrationsFolder, migrationsSchema: 'v2' });
 }

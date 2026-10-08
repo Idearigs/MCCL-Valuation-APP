@@ -1,12 +1,12 @@
 {
-  "id": "bb98b35f-868d-4970-96f9-7b099de5f9df",
+  "id": "f8d5a3f1-d05a-4ed9-b767-9544f74b3b30",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.audit_log": {
+    "v2.audit_log": {
       "name": "audit_log",
-      "schema": "",
+      "schema": "v2",
       "columns": {
         "id": {
           "name": "id",
@@ -80,6 +80,7 @@
           "name": "audit_log_user_id_users_id_fk",
           "tableFrom": "audit_log",
           "tableTo": "users",
+          "schemaTo": "v2",
           "columnsFrom": [
             "user_id"
           ],
@@ -96,9 +97,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.document_images": {
+    "v2.document_images": {
       "name": "document_images",
-      "schema": "",
+      "schema": "v2",
       "columns": {
         "id": {
           "name": "id",
@@ -192,6 +193,7 @@
           "name": "document_images_document_id_documents_id_fk",
           "tableFrom": "document_images",
           "tableTo": "documents",
+          "schemaTo": "v2",
           "columnsFrom": [
             "document_id"
           ],
@@ -208,9 +210,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.documents": {
+    "v2.documents": {
       "name": "documents",
-      "schema": "",
+      "schema": "v2",
       "columns": {
         "id": {
           "name": "id",
@@ -323,7 +325,7 @@
             }
           ],
           "isUnique": false,
-          "where": "\"documents\".\"deleted_at\" is null",
+          "where": "\"v2\".\"documents\".\"deleted_at\" is null",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -364,6 +366,7 @@
           "name": "documents_created_by_users_id_fk",
           "tableFrom": "documents",
           "tableTo": "users",
+          "schemaTo": "v2",
           "columnsFrom": [
             "created_by"
           ],
@@ -377,6 +380,7 @@
           "name": "documents_updated_by_users_id_fk",
           "tableFrom": "documents",
           "tableTo": "users",
+          "schemaTo": "v2",
           "columnsFrom": [
             "updated_by"
           ],
@@ -401,9 +405,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.generated_pdfs": {
+    "v2.generated_pdfs": {
       "name": "generated_pdfs",
-      "schema": "",
+      "schema": "v2",
       "columns": {
         "id": {
           "name": "id",
@@ -496,6 +500,7 @@
           "name": "generated_pdfs_document_id_documents_id_fk",
           "tableFrom": "generated_pdfs",
           "tableTo": "documents",
+          "schemaTo": "v2",
           "columnsFrom": [
             "document_id"
           ],
@@ -512,9 +517,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.pin_throttle": {
+    "v2.pin_throttle": {
       "name": "pin_throttle",
-      "schema": "",
+      "schema": "v2",
       "columns": {
         "key": {
           "name": "key",
@@ -551,9 +556,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.sessions": {
+    "v2.sessions": {
       "name": "sessions",
-      "schema": "",
+      "schema": "v2",
       "columns": {
         "id": {
           "name": "id",
@@ -629,6 +634,7 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
+          "schemaTo": "v2",
           "columnsFrom": [
             "user_id"
           ],
@@ -653,9 +659,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.users": {
+    "v2.users": {
       "name": "users",
-      "schema": "",
+      "schema": "v2",
       "columns": {
         "id": {
           "name": "id",
@@ -737,7 +743,9 @@
     }
   },
   "enums": {},
-  "schemas": {},
+  "schemas": {
+    "v2": "v2"
+  },
   "sequences": {},
   "roles": {},
   "policies": {},

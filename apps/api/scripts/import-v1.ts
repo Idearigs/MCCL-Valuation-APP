@@ -2,15 +2,18 @@
  * Copies documents from a v1 (current live app) database into v2.
  * The v1 database is only read (inside a READ ONLY transaction); nothing in it changes.
  *
- *   npx tsx --env-file=.env scripts/import-v1.ts <v1-database-url> [--uploads-base https://live.app] [--replace] [--dry-run]
- *   (production: node dist/import-v1.js "$LEGACY_DATABASE_URL" --uploads-base "$LEGACY_UPLOADS_URL")
+ *   Production (Coolify terminal, same database + /app/uploads volume):  node dist/import-v1.js
+ *   Local:  npx tsx --env-file=.env scripts/import-v1.ts [v1-database-url] [--uploads-dir DIR | --uploads-base URL] [--replace] [--dry-run]
  *
  * - Idempotent: documents already imported (matched by their v1 id) are skipped, so it can
  *   be re-run to pick up new documents. --replace re-imports them instead.
  * - Schedules are converted to one continuous schedule (see documents/legacy.ts).
- * - Photos: base64 photos come from the database; /uploads/... files are downloaded from
- *   --uploads-base (database backups don't contain them). Missing photos are reported.
+ * - Photos: base64 photos come from the database; /uploads/... files are read from the
+ *   uploads folder (default /app/uploads) or downloaded from --uploads-base. Missing ones are reported.
  */
+import { existsSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { eq, inArray } from 'drizzle-orm';
 import pg from 'pg';
@@ -28,29 +31,32 @@ const { values, positionals } = parseArgs({
   allowPositionals: true,
   options: {
     'uploads-base': { type: 'string' },
+    'uploads-dir': { type: 'string' },
     replace: { type: 'boolean', default: false },
     'dry-run': { type: 'boolean', default: false },
   },
 });
-const sourceUrl = positionals[0];
-if (!sourceUrl) {
-  console.error('Usage: import-v1.ts <v1-database-url> [--uploads-base URL] [--replace] [--dry-run]');
-  process.exit(1);
-}
+
+const env = loadEnv();
+// By default v1's tables are read from the same database (v2 lives in its own schema),
+// and /uploads photos from the shared /app/uploads volume.
+const sourceUrl = positionals[0] ?? process.env.LEGACY_DATABASE_URL ?? env.DATABASE_URL;
+const uploadsDir = values['uploads-dir'] ?? process.env.LEGACY_UPLOADS_DIR
+  ?? (existsSync('/app/uploads') ? '/app/uploads' : undefined);
+const uploadsBase = values['uploads-base'] ?? process.env.LEGACY_UPLOADS_URL;
 
 type Row = Record<string, any>;
 
 // ── Read v1 (read-only) ───────────────────────────────────────
-const source = new pg.Client({ connectionString: sourceUrl });
+const source = new pg.Client({ connectionString: sourceUrl, ssl: env.PG_SSL ? { rejectUnauthorized: false } : false });
 await source.connect();
 await source.query('begin read only');
-const valuations: Row[] = (await source.query('select * from valuations order by created_at')).rows;
-const probates: Row[] = (await source.query('select * from probate_valuations order by created_at')).rows;
+const valuations: Row[] = (await source.query('select * from public.valuations order by created_at')).rows;
+const probates: Row[] = (await source.query('select * from public.probate_valuations order by created_at')).rows;
 await source.query('rollback');
 await source.end();
 
 // ── Write v2 ──────────────────────────────────────────────────
-const env = loadEnv();
 const { db, pool } = createDb(env.DATABASE_URL, env.PG_SSL);
 await runMigrations(db);
 const storage = createStorage(env);
@@ -64,9 +70,12 @@ const imageSize = (img: unknown) => {
 
 async function loadImage(src: string): Promise<Buffer | null> {
   if (src.startsWith('data:')) return Buffer.from(src.split(',')[1] ?? '', 'base64');
-  const base = values['uploads-base'];
-  if (src.startsWith('/') && !base) return null;
-  const res = await fetch(src.startsWith('/') ? `${base!.replace(/\/$/, '')}${src}` : src, { signal: AbortSignal.timeout(30_000) });
+  if (src.startsWith('/uploads/') && uploadsDir) {
+    const file = path.join(uploadsDir, path.basename(src));
+    if (existsSync(file)) return readFile(file);
+  }
+  if (src.startsWith('/') && !uploadsBase) return null;
+  const res = await fetch(src.startsWith('/') ? `${uploadsBase!.replace(/\/$/, '')}${src}` : src, { signal: AbortSignal.timeout(30_000) });
   return res.ok ? Buffer.from(await res.arrayBuffer()) : null;
 }
 
@@ -167,8 +176,8 @@ for (const [type, row] of all) {
 }
 
 console.log('\nSummary:', report);
-if (report.photosMissing && !values['uploads-base']) {
-  console.log('Photos stored as /uploads files were skipped: pass --uploads-base <live app URL> to download them.');
+if (report.photosMissing && !uploadsDir && !uploadsBase) {
+  console.log('Photos stored as /uploads files were skipped: pass --uploads-dir <folder> or --uploads-base <live app URL>.');
 }
 await pool.end();
 if (report.failed) process.exitCode = 1;
