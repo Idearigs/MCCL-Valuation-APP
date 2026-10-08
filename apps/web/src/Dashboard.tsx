@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { DocumentStats } from '@mccl/shared';
 import { api } from './api';
+import {
+  IcClose, IcDownload, IcEdit, IcEye, IcFile, IcLogout, IcPlus, IcPrint, IcScale, IcSearch, IcTrash,
+} from './icons';
 
 const PAGE_SIZE = 50;
 
@@ -11,31 +14,8 @@ function formatDate(iso: string) {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-const IcEdit = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-  </svg>
-);
-const IcEye = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-    <circle cx="12" cy="12" r="3"/>
-  </svg>
-);
-const IcDownload = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-    <polyline points="7 10 12 15 17 10"/>
-    <line x1="12" y1="15" x2="12" y2="3"/>
-  </svg>
-);
-const IcTrash = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="3 6 5 6 21 6"/>
-    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-  </svg>
-);
+const money = (v: string) => (v ? `£${v.replace(/^£/, '')}` : '—');
+type TypeFilter = '' | 'valuation' | 'probate';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -46,6 +26,7 @@ export default function Dashboard() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; type: 'valuation' | 'probate' } | null>(null);
   const [loading, setLoading] = useState(true);
   const [showNewModal, setShowNewModal] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('');
 
   const [stats, setStats] = useState<DocumentStats>({ valuations: 0, probates: 0, thisMonth: 0, complete: 0 });
   const [total, setTotal] = useState(0);
@@ -55,7 +36,7 @@ export default function Dashboard() {
   const load = async (nextPage = 1) => {
     try {
       const [list, s] = await Promise.all([
-        api.listDocuments({ q: search, from: dateFrom, to: dateTo, page: nextPage, pageSize: PAGE_SIZE }),
+        api.listDocuments({ q: search, from: dateFrom, to: dateTo, type: typeFilter || undefined, page: nextPage, pageSize: PAGE_SIZE }),
         api.getStats(),
       ]);
       const rows = list.items.map(r => ({
@@ -75,7 +56,7 @@ export default function Dashboard() {
   useEffect(() => {
     const t = setTimeout(() => load(1), search ? 250 : 0);
     return () => clearTimeout(t);
-  }, [search, dateFrom, dateTo]);
+  }, [search, dateFrom, dateTo, typeFilter]);
 
   const handleDelete = async (id: string) => {
     try {
@@ -91,7 +72,7 @@ export default function Dashboard() {
   };
 
   const filtered = records;
-  const hasFilters = !!(search || dateFrom || dateTo);
+  const hasFilters = !!(search || dateFrom || dateTo || typeFilter);
   const valuationCount = stats.valuations;
   const probateCount = stats.probates;
   const thisMonth = stats.thisMonth;
@@ -99,175 +80,190 @@ export default function Dashboard() {
   const editPath = (r: any) => r._type === 'probate' ? `/probate/edit/${r.id}` : `/edit/${r.id}`;
   const previewPath = (r: any) => r._type === 'probate' ? `/probate/preview/${r.id}` : `/preview/${r.id}`;
 
+  const typeLabel = (r: any) => (r._type === 'probate' ? 'Probate' : 'Valuation');
+  const statusBadge = (r: any) => (
+    <span className={`db-status ${r.status}`}>{r.status === 'complete' ? 'Complete' : 'Draft'}</span>
+  );
+  // Row/card actions. Clicks don't bubble, so they don't also open the document.
+  const actions = (r: any) => (
+    <div className="db-actions" onClick={e => e.stopPropagation()}>
+      <button className="db-act" onClick={() => navigate(editPath(r))} title="Edit" aria-label="Edit"><IcEdit /></button>
+      <button className="db-act" onClick={() => navigate(`${previewPath(r)}?print=true`)} title="Print" aria-label="Print"><IcPrint /></button>
+      <button className="db-act" onClick={() => navigate(`${previewPath(r)}?download=true`)} title="Download PDF" aria-label="Download PDF"><IcDownload /></button>
+      <button className="db-act db-act-danger" onClick={() => setDeleteConfirm({ id: r.id, type: r._type })} title="Delete" aria-label="Delete"><IcTrash /></button>
+    </div>
+  );
+
   return (
-    <div className="dash-shell">
-      <header className="dash-header">
-        <div className="dash-header-inner">
-          <div className="dash-brand">
-            <div className="dash-brand-text">MCCL · Valuation</div>
+    <div className="db-shell">
+      <header className="tb-bar">
+        <div className="tb-inner db-top">
+          <div className="db-brand">
+            <div className="db-logo">M</div>
+            <div>
+              <div className="tb-title">McCulloch</div>
+              <div className="tb-sub">Valuation Manager</div>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <button className="btn btn-primary btn-sm dash-nav-btn" onClick={() => setShowNewModal(true)}>+ New</button>
-            <button className="dash-signout-btn" onClick={handleLogout}>Sign out</button>
+          <div className="tb-buttons">
+            <button className="tb-btn tb-btn-quiet" onClick={handleLogout} title="Sign out">
+              <IcLogout /><span className="tb-label">Sign out</span>
+            </button>
+            <button className="tb-btn tb-btn-primary" onClick={() => setShowNewModal(true)}>
+              <IcPlus /><span>New</span>
+            </button>
           </div>
         </div>
       </header>
 
-      <main className="dash-main">
-        <div className="dash-stats">
-          <div className="dash-stat-card">
-            <div className="dash-stat-label">Valuations</div>
-            <div className="dash-stat-value">{valuationCount}</div>
-          </div>
-          <div className="dash-stat-card">
-            <div className="dash-stat-label">Probate</div>
-            <div className="dash-stat-value">{probateCount}</div>
-          </div>
-          <div className="dash-stat-card">
-            <div className="dash-stat-label">This Month</div>
-            <div className="dash-stat-value">{thisMonth}</div>
-          </div>
-          <div className="dash-stat-card">
-            <div className="dash-stat-label">Complete</div>
-            <div className="dash-stat-value">{stats.complete}</div>
-          </div>
-        </div>
+      <main className="db-main">
+        <section className="db-stats">
+          {([
+            ['Valuations', valuationCount],
+            ['Probate', probateCount],
+            ['This month', thisMonth],
+            ['Complete', stats.complete],
+          ] as const).map(([label, value]) => (
+            <div className="db-stat" key={label}>
+              <div className="db-stat-value">{value}</div>
+              <div className="db-stat-label">{label}</div>
+            </div>
+          ))}
+        </section>
 
-        <div className="dash-table-card">
-          <div className="dash-table-toolbar">
-            <input type="text" placeholder="Search by name or date…" value={search} onChange={e => setSearch(e.target.value)} className="dash-search" />
-            <span className="dash-count">{total} {total === 1 ? 'document' : 'documents'}</span>
+        <section className="db-panel">
+          <div className="db-toolbar">
+            <div className="db-search">
+              <IcSearch />
+              <input type="text" placeholder="Search name, executor or address" value={search}
+                onChange={e => setSearch(e.target.value)} aria-label="Search documents" />
+              {search && <button className="db-clear" onClick={() => setSearch('')} aria-label="Clear search"><IcClose /></button>}
+            </div>
+            <div className="tb-seg" role="radiogroup" aria-label="Document type">
+              {([['', 'All'], ['valuation', 'Valuations'], ['probate', 'Probate']] as const).map(([value, label]) => (
+                <button key={label} role="radio" aria-checked={typeFilter === value}
+                  className={typeFilter === value ? 'on' : ''} onClick={() => setTypeFilter(value)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="db-dates">
+              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} aria-label="From date" title="From date" />
+              <span>–</span>
+              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} aria-label="To date" title="To date" />
+              {(dateFrom || dateTo) && (
+                <button className="db-clear" onClick={() => { setDateFrom(''); setDateTo(''); }} aria-label="Clear dates"><IcClose /></button>
+              )}
+            </div>
           </div>
-          <div className="dash-date-filters">
-            <span className="dash-date-label">Date:</span>
-            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="dash-date-input" title="From date" />
-            <span className="dash-date-label">—</span>
-            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="dash-date-input" title="To date" />
-            {(dateFrom || dateTo) && (
-              <button className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: 11 }} onClick={() => { setDateFrom(''); setDateTo(''); }}>✕</button>
-            )}
-          </div>
+          <div className="db-count">{loading ? 'Loading…' : `${total} ${total === 1 ? 'document' : 'documents'}`}</div>
 
           {loading ? (
-            <div className="dash-empty"><div style={{ color: 'var(--grey)' }}>Loading…</div></div>
+            <div className="db-empty"><div className="upload-spinner" /></div>
           ) : filtered.length === 0 ? (
-            <div className="dash-empty">
+            <div className="db-empty">
               {!hasFilters ? (
                 <>
-                  <div style={{ fontSize: 48, marginBottom: 12 }}>📄</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>No documents yet</div>
-                  <div style={{ color: 'var(--grey)', marginBottom: 20 }}>Create your first valuation or probate document</div>
-                  <button className="btn btn-primary" onClick={() => setShowNewModal(true)}>+ New Document</button>
+                  <div className="db-empty-icon"><IcFile /></div>
+                  <div className="db-empty-title">No documents yet</div>
+                  <div className="db-empty-text">Create your first valuation or probate document.</div>
+                  <button className="tb-btn tb-btn-primary" onClick={() => setShowNewModal(true)}><IcPlus /><span>New document</span></button>
                 </>
               ) : (
-                <><div style={{ fontSize: 36, marginBottom: 8 }}>🔍</div><div>No results for "{search}"</div></>
+                <>
+                  <div className="db-empty-icon"><IcSearch /></div>
+                  <div className="db-empty-title">No matching documents</div>
+                  <div className="db-empty-text">Try a different name, type or date range.</div>
+                </>
               )}
             </div>
           ) : (
             <>
               {/* Desktop table */}
-              <div className="dash-table-wrap dash-desktop-only">
-                <table className="dash-table">
+              <div className="db-table-wrap dash-desktop-only">
+                <table className="db-table">
                   <thead>
                     <tr>
-                      <th>Type</th>
                       <th>Name</th>
                       <th>Date</th>
-                      <th>Value</th>
+                      <th className="db-num">Value</th>
                       <th>Status</th>
-                      <th>Created</th>
-                      <th></th>
+                      <th className="db-actions-col"><span className="sr-only">Actions</span></th>
                     </tr>
                   </thead>
                   <tbody>
                     {filtered.map(r => (
-                      <tr key={r.id + r._type} className="dash-row">
+                      <tr key={r.id + r._type} onClick={() => navigate(previewPath(r))} title="Open document">
                         <td>
-                          <span className={`dash-badge ${r._type === 'probate' ? 'probate-badge' : 'valuation-badge'}`}>
-                            {r._type === 'probate' ? 'Probate' : 'Valuation'}
-                          </span>
-                        </td>
-                        <td className="dash-cell-name">{r._name || '—'}</td>
-                        <td>{formatDate(r._date)}</td>
-                        <td className="dash-cell-value">{r._value ? `£${r._value.replace(/^£/, '')}` : '—'}</td>
-                        <td><span className={`dash-badge ${r.status}`}>{r.status === 'complete' ? 'Complete' : 'Draft'}</span></td>
-                        <td className="dash-cell-meta">{formatDate(r.created_at)}</td>
-                        <td>
-                          <div className="dash-actions">
-                            <button className="dash-action-btn" onClick={() => navigate(editPath(r))} title="Edit">✏️</button>
-                            <button className="dash-action-btn" onClick={() => navigate(previewPath(r))} title="View document">👁️</button>
-                            <button className="dash-action-btn" onClick={() => navigate(`${previewPath(r)}?print=true`)} title="Print">🖨️</button>
-                            <button className="dash-action-btn download" onClick={() => navigate(`${previewPath(r)}?download=true`)} title="Download PDF">⬇</button>
-                            <button className="dash-action-btn danger" onClick={() => setDeleteConfirm({ id: r.id, type: r._type })} title="Delete">🗑️</button>
+                          <div className="db-name">{r._name || 'Untitled'}</div>
+                          <div className="db-sub">
+                            <span className={`db-type ${r._type}`}>{typeLabel(r)}</span> · created {formatDate(r.created_at)}
                           </div>
                         </td>
+                        <td className="db-muted">{formatDate(r._date)}</td>
+                        <td className="db-num db-value">{money(r._value)}</td>
+                        <td>{statusBadge(r)}</td>
+                        <td className="db-actions-col">{actions(r)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
 
-              {/* Mobile cards */}
-              <div className="dash-cards dash-mobile-only">
+              {/* Phone cards */}
+              <div className="db-cards dash-mobile-only">
                 {filtered.map(r => (
-                  <div key={r.id + r._type} className="dash-card">
-                    <div className="dash-card-body">
-                      <div className="dash-card-row1">
-                        <div className="dash-card-left">
-                          <div className="dash-card-name">{r._name || '—'}</div>
-                          <div className="dash-card-sub">
-                            {[r._type === 'probate' ? 'Probate' : 'Valuation', formatDate(r._date)].filter(Boolean).join(' · ')}
-                          </div>
-                        </div>
-                        <div className="dash-card-right">
-                          {r._value && <div className="dash-card-amount">£{r._value.replace(/^£/, '')}</div>}
-                          <span className={`dash-badge ${r.status}`}>{r.status === 'complete' ? 'Complete' : 'Draft'}</span>
+                  <div key={r.id + r._type} className="db-card" onClick={() => navigate(previewPath(r))} role="button" tabIndex={0}
+                    onKeyDown={e => { if (e.key === 'Enter') navigate(previewPath(r)); }}>
+                    <div className="db-card-main">
+                      <div className="db-card-left">
+                        <div className="db-name">{r._name || 'Untitled'}</div>
+                        <div className="db-sub">
+                          <span className={`db-type ${r._type}`}>{typeLabel(r)}</span> · {formatDate(r._date)}
                         </div>
                       </div>
+                      <div className="db-card-right">
+                        <div className="db-value">{money(r._value)}</div>
+                        {statusBadge(r)}
+                      </div>
                     </div>
-                    <div className="dash-card-actions">
-                      <button className="dash-ic-btn" onClick={() => navigate(editPath(r))} title="Edit"><IcEdit /></button>
-                      <button className="dash-ic-btn" onClick={() => navigate(previewPath(r))} title="View document"><IcEye /></button>
-                      <button className="dash-ic-btn accent" onClick={() => navigate(`${previewPath(r)}?download=true`)} title="Download PDF"><IcDownload /></button>
-                      <button className="dash-ic-btn danger" onClick={() => setDeleteConfirm({ id: r.id, type: r._type })} title="Delete"><IcTrash /></button>
+                    <div className="db-card-foot">
+                      <span className="db-open"><IcEye /> Open</span>
+                      {actions(r)}
                     </div>
                   </div>
                 ))}
               </div>
               {records.length < total && (
-                <div style={{ textAlign: 'center', padding: 16 }}>
-                  <button className="btn btn-ghost" onClick={() => load(page + 1)}>
+                <div className="db-more">
+                  <button className="tb-btn" onClick={() => load(page + 1)}>
                     Show more ({total - records.length} remaining)
                   </button>
                 </div>
               )}
             </>
           )}
-        </div>
+        </section>
       </main>
 
       {/* New Document modal */}
       {showNewModal && (
         <div className="modal-overlay" onClick={() => setShowNewModal(false)}>
-          <div className="modal-card" onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>Select Document Type</h3>
-            <p style={{ color: 'var(--grey)', fontSize: 13, marginBottom: 24 }}>What type of document would you like to create?</p>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button
-                className="new-doc-type-btn"
-                onClick={() => { setShowNewModal(false); navigate('/new'); }}
-              >
-                <span style={{ fontSize: 28, marginBottom: 8, display: 'block' }}>📋</span>
-                <div style={{ fontWeight: 700, marginBottom: 4 }}>Valuation</div>
-                <div style={{ fontSize: 12, color: 'var(--grey)' }}>Insurance replacement valuation</div>
+          <div className="modal-card db-modal" onClick={e => e.stopPropagation()}>
+            <div className="db-modal-head">
+              <h3>New document</h3>
+              <button className="db-clear" onClick={() => setShowNewModal(false)} aria-label="Close"><IcClose /></button>
+            </div>
+            <div className="db-type-grid">
+              <button className="db-type-btn" onClick={() => { setShowNewModal(false); navigate('/new'); }}>
+                <span className="db-type-icon valuation"><IcFile /></span>
+                <span className="db-type-name">Valuation</span>
+                <span className="db-type-desc">Insurance replacement</span>
               </button>
-              <button
-                className="new-doc-type-btn"
-                onClick={() => { setShowNewModal(false); navigate('/probate/new'); }}
-              >
-                <span style={{ fontSize: 28, marginBottom: 8, display: 'block' }}>⚖️</span>
-                <div style={{ fontWeight: 700, marginBottom: 4 }}>Probate</div>
-                <div style={{ fontSize: 12, color: 'var(--grey)' }}>Probate &amp; inheritance tax valuation</div>
+              <button className="db-type-btn" onClick={() => { setShowNewModal(false); navigate('/probate/new'); }}>
+                <span className="db-type-icon probate"><IcScale /></span>
+                <span className="db-type-name">Probate</span>
+                <span className="db-type-desc">Probate &amp; inheritance tax</span>
               </button>
             </div>
           </div>
@@ -277,12 +273,12 @@ export default function Dashboard() {
       {/* Delete confirm modal */}
       {deleteConfirm && (
         <div className="modal-overlay" onClick={() => setDeleteConfirm(null)}>
-          <div className="modal-card" onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Delete Document?</h3>
-            <p style={{ color: 'var(--grey)', marginBottom: 24, fontSize: 14 }}>It will be removed from the dashboard.</p>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => setDeleteConfirm(null)}>Cancel</button>
-              <button className="btn btn-danger" style={{ flex: 1 }} onClick={() => handleDelete(deleteConfirm.id)}>Delete</button>
+          <div className="modal-card db-modal" onClick={e => e.stopPropagation()}>
+            <div className="db-modal-head"><h3>Delete document?</h3></div>
+            <p className="db-modal-text">It will be removed from the dashboard.</p>
+            <div className="db-modal-actions">
+              <button className="tb-btn" onClick={() => setDeleteConfirm(null)}>Cancel</button>
+              <button className="tb-btn db-btn-danger" onClick={() => handleDelete(deleteConfirm.id)}><IcTrash /><span>Delete</span></button>
             </div>
           </div>
         </div>
