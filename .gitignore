@@ -1,2 +1,9 @@
 node_modules/
 dist/
+.env
+.env.*
+!.env.example
+*.log
+coverage/
+# local dev data (embedded Postgres, local file storage, restored backups)
+.data/
