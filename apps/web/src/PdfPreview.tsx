@@ -8,6 +8,9 @@ import { IcBack, IcDownload, IcEdit, IcPrint, IcRuler } from './icons';
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 
+/** Remembers which paper the shop printed on last, to highlight it next time. */
+const PAPER_KEY = 'mccl-print-paper';
+
 // ── Preview & print: the PDF is generated on the server ───────
 // The browser only displays the finished file, drawing each page when it scrolls into
 // view, so large documents never exhaust tablet memory.
@@ -19,9 +22,14 @@ export default function PdfPreview({ documentId, title, editPath, fileName }: {
 }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  // Opened via the dashboard's Print button: show what will actually print.
-  const [mode, setMode] = useState<PdfMode>(searchParams.get('print') === 'true' ? 'stationery' : 'letterhead');
+  const [mode, setMode] = useState<PdfMode>('letterhead');
   const [printing, setPrinting] = useState(false);
+  // Print asks which paper is in the printer. Opened via the dashboard's Print button,
+  // the question appears straight away.
+  const [printMenu, setPrintMenu] = useState(searchParams.get('print') === 'true');
+  const [lastPaper, setLastPaper] = useState<PdfMode | null>(() => {
+    try { return (localStorage.getItem(PAPER_KEY) as PdfMode | null) ?? null; } catch { return null; }
+  });
   const [result, setResult] = useState<PdfResult | null>(null);
   const [pdfBytes, setPdfBytes] = useState<Blob | null>(null);
   const [error, setError] = useState('');
@@ -40,11 +48,10 @@ export default function PdfPreview({ documentId, title, editPath, fileName }: {
         const blob = await res.blob();
         if (cancelled) return;
         setResult(r); setPdfBytes(blob);
-        // Dashboard shortcuts: ?download=true saves the file, ?print=true opens the print dialog.
+        // Dashboard shortcut: ?download=true saves the file (?print=true opens the paper choice).
         if (!autoDownloadDone.current) {
           autoDownloadDone.current = true;
           if (searchParams.get('download') === 'true') saveBlob(blob, fileName);
-          else if (searchParams.get('print') === 'true') printBlob(blob);
         }
       } catch (err) {
         if (!cancelled) setError((err as Error).message);
@@ -55,14 +62,16 @@ export default function PdfPreview({ documentId, title, editPath, fileName }: {
     return () => { cancelled = true; };
   }, [documentId, mode, attempt]);
 
-  // The shop prints on pre-printed letterhead paper, so Print always uses the version
-  // without the letterhead. Printing the letterhead version on that paper printed the
-  // logo and address twice. "Letterhead" view is for screen, download and email.
-  const handlePrint = async () => {
-    if (mode === 'stationery' && pdfBytes) { printBlob(pdfBytes); return; }
+  // The shop prints on both plain paper (needs the letterhead printed) and pre-printed
+  // letterhead paper (must not print it again), so Print asks which is in the printer.
+  const printOn = async (paper: PdfMode) => {
+    setPrintMenu(false);
+    setLastPaper(paper);
+    try { localStorage.setItem(PAPER_KEY, paper); } catch { /* private mode */ }
+    if (paper === mode && pdfBytes) { printBlob(pdfBytes); return; }
     setPrinting(true);
     try {
-      const r = await api.generatePdf(documentId, 'stationery');
+      const r = await api.generatePdf(documentId, paper);
       const res = await fetch(r.url);
       if (!res.ok) throw new Error('Could not download the document for printing');
       printBlob(await res.blob());
@@ -110,10 +119,28 @@ export default function PdfPreview({ documentId, title, editPath, fileName }: {
                   <IcRuler /><span className="tb-label">Alignment</span>
                 </a>
               )}
-              <button className="tb-btn" onClick={handlePrint} disabled={!pdfBytes || printing}
-                title="Print on pre-printed letterhead paper (the letterhead itself is not printed)">
-                <IcPrint /><span className="tb-label">{printing ? 'Preparing…' : 'Print'}</span>
-              </button>
+              <div className="tb-menu-wrap">
+                <button className="tb-btn" onClick={() => setPrintMenu(o => !o)} disabled={!pdfBytes || printing}
+                  aria-haspopup="menu" aria-expanded={printMenu} title="Print">
+                  <IcPrint /><span className="tb-label">{printing ? 'Preparing…' : 'Print'}</span>
+                </button>
+                {printMenu && pdfBytes && !printing && (
+                  <>
+                    <div className="tb-menu-backdrop" onClick={() => setPrintMenu(false)} />
+                    <div className="tb-menu" role="menu">
+                      <div className="tb-menu-title">Which paper is in the printer?</div>
+                      <button role="menuitem" className={lastPaper === 'letterhead' ? 'last' : ''} onClick={() => printOn('letterhead')}>
+                        <strong>Plain paper</strong>
+                        <span>Prints the letterhead too</span>
+                      </button>
+                      <button role="menuitem" className={lastPaper === 'stationery' ? 'last' : ''} onClick={() => printOn('stationery')}>
+                        <strong>Pre-printed letterhead paper</strong>
+                        <span>Leaves the letterhead out</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
               <button className="tb-btn tb-btn-primary" onClick={() => pdfBytes && saveBlob(pdfBytes, fileName)}
                 disabled={!pdfBytes} title="Download PDF">
                 <IcDownload /><span>PDF</span>
