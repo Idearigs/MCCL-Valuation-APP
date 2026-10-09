@@ -1509,3 +1509,28 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 @media (max-width: 380px) {
   .db-type-grid { grid-template-columns: 1fr; }
 }
+
+
+/* Print: which paper is in the printer? */
+.tb-menu-wrap { position: relative; }
+.tb-menu-backdrop { position: fixed; inset: 0; z-index: 60; }
+.tb-menu {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 61; width: 280px;
+  background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 6px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.16);
+}
+.tb-menu-title { font-size: 12px; font-weight: 600; color: var(--grey); padding: 6px 10px 4px; }
+.tb-menu button {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%;
+  padding: 10px; border: 0; border-radius: 10px; background: transparent; text-align: left; cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+.tb-menu button strong { font-size: 14px; font-weight: 600; color: var(--dark); }
+.tb-menu button span { font-size: 12.5px; color: var(--grey); }
+.tb-menu button:hover { background: var(--surface); }
+.tb-menu button.last { background: var(--blue-pale); }
+.tb-menu button.last strong::after {
+  content: 'Last used'; display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 6px;
+  background: var(--white); color: var(--blue); font-size: 11px; font-weight: 600; white-space: nowrap; vertical-align: 1px;
+}
+@media (max-width: 480px) { .tb-menu { right: -60px; } }
