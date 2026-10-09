@@ -122,8 +122,13 @@ export function ValuationDocument(p: ValuationTemplateProps) {
       {hasPricing && (
         <Section id="pricing" markers={p.markers}>
           <p className="pricing-header">Replacement Cost (UK Retail Market {year})</p>
-          <div className="pricing-row"><span className="pricing-label">Component</span></div>
-          <div className="pricing-row" style={{ marginTop: '-2mm' }}><span className="pricing-label">Estimated Value</span></div>
+          {/* Column headings only when there are component prices to list under them. */}
+          {pricingRows.length > 0 && (
+            <>
+              <div className="pricing-row"><span className="pricing-label">Component</span></div>
+              <div className="pricing-row" style={{ marginTop: '-2mm' }}><span className="pricing-label">Estimated Value</span></div>
+            </>
+          )}
           {pricingRows.map(row => (
             <div className="keep" key={row.id}>
               <div className="pricing-row" style={{ marginTop: '4mm' }}>

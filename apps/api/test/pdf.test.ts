@@ -201,3 +201,18 @@ describe('insurer notice', () => {
     }
   }, 180_000);
 });
+
+describe('pricing section', () => {
+  it('omits the Component / Estimated Value headings when no component prices were entered', async () => {
+    const empty = await agent.post('/api/documents').send(sampleValuation({
+      details: { ...sampleValuation().details, pricingRows: [{ id: '1', component: '', estimatedValue: '' }], totalRange: '', insuranceValue: '£3,500.00' },
+    }));
+    let all = (await pageTexts(await download((await agent.post(`/api/documents/${empty.body.id}/pdf`).send({})).body.url))).join('\n');
+    expect(all).toContain('Recommended Insurance Value');
+    expect(all).not.toContain('Estimated Value');
+
+    const priced = await agent.post('/api/documents').send(sampleValuation());
+    all = (await pageTexts(await download((await agent.post(`/api/documents/${priced.body.id}/pdf`).send({})).body.url))).join('\n');
+    expect(all).toContain('Estimated Value');
+  }, 180_000);
+});
